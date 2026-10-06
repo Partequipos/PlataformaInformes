@@ -205,3 +205,16 @@ DROP TRIGGER IF EXISTS update_parameters_updated_at ON parameters;
 CREATE TRIGGER update_parameters_updated_at
     BEFORE UPDATE ON parameters
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS: tablas public expuestas a PostgREST (lint rls_disabled_in_public).
+-- Backend usa rol postgres (bypassa RLS). Sin políticas = sin acceso anon/authenticated.
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.components ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.photos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.suggested_parts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.machine_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.component_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.parameters ENABLE ROW LEVEL SECURITY;
