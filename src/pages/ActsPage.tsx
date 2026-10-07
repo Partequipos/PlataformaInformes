@@ -104,7 +104,7 @@ export const ActsPage: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-slate-700">{act.location}</td>
                   <td className="px-4 py-3 text-slate-700">
-                    {[act.brand, act.model_type].filter(Boolean).join(' ') || act.equipment_type || '—'}
+                    {act.model_type || act.equipment_type || '—'}
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     {act.pin_serial || act.internal_code || '—'}

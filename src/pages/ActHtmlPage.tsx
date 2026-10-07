@@ -115,10 +115,9 @@ export const ActHtmlPage: React.FC = () => {
         <section className="mb-8 space-y-2">
           <h2 className="font-display text-lg font-bold text-brand-red">I. Datos de identificación del equipo (cabezote)</h2>
           {[
-            ['Tipo de equipo', act.equipment_type],
-            ['Marca', act.brand],
+            ['Tipo de máquina', act.equipment_type],
+            ['Modelo', act.model_type],
             ['Línea / Serie', act.line_series],
-            ['Modelo / Tipo', act.model_type],
             ['PIN / N° Serie (Chasis)', act.pin_serial],
             ['Número de Motor', act.engine_number],
             ['Código / Identificación Interna', act.internal_code],

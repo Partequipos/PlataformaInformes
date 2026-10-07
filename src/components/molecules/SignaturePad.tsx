@@ -62,7 +62,8 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ value, onChange, lab
     if (!drawing.current) return;
     drawing.current = false;
     const canvas = canvasRef.current;
-    if (canvas) onChange(canvas.toDataURL('image/png'));
+    // JPEG keeps act JSON under Vercel body limits (PNG data-URLs are large)
+    if (canvas) onChange(canvas.toDataURL('image/jpeg', 0.55));
   };
 
   const clear = () => {
@@ -79,8 +80,8 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ value, onChange, lab
       <p className="text-sm font-medium text-slate-700">{label}</p>
       <canvas
         ref={canvasRef}
-        width={480}
-        height={160}
+        width={360}
+        height={120}
         className="w-full max-w-md border border-slate-300 rounded-lg bg-white touch-none cursor-crosshair"
         onPointerDown={start}
         onPointerMove={move}

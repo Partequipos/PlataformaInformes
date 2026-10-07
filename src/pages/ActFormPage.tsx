@@ -13,6 +13,8 @@ import { useTypes } from '../context/TypesContext';
 import { useAct, useSaveAct } from '../hooks/useActs';
 import { apiService } from '../services/api';
 import { REPORT_MODEL_OPTIONS } from '../constants/reportModels';
+import { compressImageFiles } from '../utils/compressImage';
+import { compressVideoFiles } from '../utils/compressVideo';
 import {
   ACT_LOCATIONS,
   DEFAULT_LUBRICATION,
@@ -21,6 +23,9 @@ import {
   type ActType,
   type EquipmentAct,
 } from '../constants/equipmentActs';
+
+const PHOTO_BATCH_SIZE = 2;
+const MEDIA_ONLY_ACT_DATA = '{}';
 
 type PhotoItem = File | { id: string; url: string; filename: string; photo_name?: string };
 type VideoItem = File | { id: string; url: string; filename: string };
@@ -142,6 +147,7 @@ export const ActFormPage: React.FC = () => {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!existing) return;
@@ -194,31 +200,44 @@ export const ActFormPage: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const buildFormData = (): FormData => {
+  const buildMetaFormData = (): FormData => {
     const fd = new FormData();
     fd.append('actData', JSON.stringify(form));
-    let photoIdx = 0;
-    let videoIdx = 0;
-    let attachIdx = 0;
-    photos.forEach((item) => {
-      if (item instanceof File) {
-        fd.append(`photos_${photoIdx}`, item);
-        photoIdx += 1;
-      }
-    });
-    videos.forEach((item) => {
-      if (item instanceof File) {
-        fd.append(`videos_${videoIdx}`, item);
-        videoIdx += 1;
-      }
-    });
-    attachments.forEach((item) => {
-      if (item instanceof File) {
-        fd.append(`attachments_${attachIdx}`, item);
-        attachIdx += 1;
-      }
+    return fd;
+  };
+
+  const buildMediaFormData = (files: File[], fieldPrefix: 'photos' | 'videos' | 'attachments'): FormData => {
+    const fd = new FormData();
+    fd.append('actData', MEDIA_ONLY_ACT_DATA);
+    files.forEach((file, index) => {
+      fd.append(`${fieldPrefix}_${index}`, file, file.name);
     });
     return fd;
+  };
+
+  const uploadMediaInBatches = async (actId: string) => {
+    const newPhotos = photos.filter((p): p is File => typeof File !== 'undefined' && p instanceof File);
+    const newVideos = videos.filter((v): v is File => typeof File !== 'undefined' && v instanceof File);
+    const newPdfs = attachments.filter((a): a is File => typeof File !== 'undefined' && a instanceof File);
+
+    if (newPhotos.length > 0) {
+      const compressed = await compressImageFiles(newPhotos);
+      for (let offset = 0; offset < compressed.length; offset += PHOTO_BATCH_SIZE) {
+        const batch = compressed.slice(offset, offset + PHOTO_BATCH_SIZE);
+        await apiService.updateAct(actId, buildMediaFormData(batch, 'photos'));
+      }
+    }
+
+    if (newVideos.length > 0) {
+      const compressedVideos = await compressVideoFiles(newVideos);
+      for (const video of compressedVideos) {
+        await apiService.updateAct(actId, buildMediaFormData([video], 'videos'));
+      }
+    }
+
+    for (const pdf of newPdfs) {
+      await apiService.updateAct(actId, buildMediaFormData([pdf], 'attachments'));
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -228,11 +247,32 @@ export const ActFormPage: React.FC = () => {
       setError('Seleccione el lugar');
       return;
     }
+    if (!form.equipment_type?.trim()) {
+      setError('Tipo de máquina es requerido');
+      return;
+    }
+    if (!form.model_type?.trim()) {
+      setError('Modelo es requerido');
+      return;
+    }
+    setIsSaving(true);
     try {
-      const saved = await saveMutation.mutateAsync({ id, formData: buildFormData() });
+      // 1) Save text + signatures first (no binary media) to avoid Vercel 413
+      const saved = await saveMutation.mutateAsync({ id, formData: buildMetaFormData() });
+      // 2) Upload compressed media in small batches
+      await uploadMediaInBatches(saved.id);
       navigate(`/acts/${saved.id}/html`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
+      const message = err instanceof Error ? err.message : 'Error al guardar';
+      if (message.includes('413') || /too large/i.test(message)) {
+        setError(
+          'Request too large. Photos/videos are uploaded in small batches — try again or use fewer/smaller files.'
+        );
+        return;
+      }
+      setError(message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -250,7 +290,7 @@ export const ActFormPage: React.FC = () => {
                 Volver
               </Button>
             </Link>
-            <Button type="submit" isLoading={saveMutation.isPending}>
+            <Button type="submit" isLoading={isSaving || saveMutation.isPending}>
               Guardar acta
             </Button>
           </div>
@@ -296,22 +336,21 @@ export const ActFormPage: React.FC = () => {
           <h2 className={sectionTitle}>I. Datos de identificación del equipo (cabezote)</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <Select
-              label="Machine Type"
+              label="Tipo de máquina"
               required
               value={form.equipment_type}
               onChange={(e) => setField('equipment_type', e.target.value)}
               options={machineTypeOptions}
-              placeholder="Select machine type"
+              placeholder="Seleccione tipo de máquina"
             />
             <Select
-              label="Model"
+              label="Modelo"
               required
               value={form.model_type}
               onChange={(e) => setField('model_type', e.target.value)}
               options={REPORT_MODEL_OPTIONS}
-              placeholder="Select model"
+              placeholder="Seleccione modelo"
             />
-            <Input label="Marca" value={form.brand} onChange={(e) => setField('brand', e.target.value)} placeholder="HITACHI" />
             <Input label="Línea / Serie" value={form.line_series} onChange={(e) => setField('line_series', e.target.value)} />
             <Input label="PIN / N° Serie Máquina (Chasis)" value={form.pin_serial} onChange={(e) => setField('pin_serial', e.target.value)} />
             <Input label="Número de Motor" value={form.engine_number} onChange={(e) => setField('engine_number', e.target.value)} />
@@ -460,7 +499,7 @@ export const ActFormPage: React.FC = () => {
               { value: 'completed', label: 'Completada' },
             ]}
           />
-          <Button type="submit" isLoading={saveMutation.isPending}>
+          <Button type="submit" isLoading={isSaving || saveMutation.isPending}>
             Guardar y ver HTML
           </Button>
         </div>

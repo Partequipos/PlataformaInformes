@@ -155,10 +155,9 @@ export function buildActHtml(act: EquipmentAct): string {
     </header>
 
     <h2>I. DATOS DE IDENTIFICACIÓN DEL EQUIPO (CABEZOTE)</h2>
-    ${fieldRow('Tipo de equipo', act.equipment_type)}
-    ${fieldRow('Marca', act.brand)}
+    ${fieldRow('Tipo de máquina', act.equipment_type)}
+    ${fieldRow('Modelo', act.model_type)}
     ${fieldRow('Línea / Serie', act.line_series)}
-    ${fieldRow('Modelo / Tipo', act.model_type)}
     ${fieldRow('PIN / Número de Serie Máquina (Chasis)', act.pin_serial)}
     ${fieldRow('Número de Motor', act.engine_number)}
     ${fieldRow('Código / Identificación Interna', act.internal_code)}
