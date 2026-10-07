@@ -9,8 +9,10 @@ import { PhotoUpload } from '../components/molecules/PhotoUpload';
 import { VideoUpload } from '../components/molecules/VideoUpload';
 import { SignaturePad } from '../components/molecules/SignaturePad';
 import { useAuth } from '../context/AuthContext';
+import { useTypes } from '../context/TypesContext';
 import { useAct, useSaveAct } from '../hooks/useActs';
 import { apiService } from '../services/api';
+import { REPORT_MODEL_OPTIONS } from '../constants/reportModels';
 import {
   ACT_LOCATIONS,
   DEFAULT_LUBRICATION,
@@ -122,6 +124,15 @@ export const ActFormPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialType = (searchParams.get('type') === 'exit' ? 'exit' : 'entry') as ActType;
   const isEdit = Boolean(id);
+  const { machineTypes } = useTypes();
+
+  const machineTypeOptions = useMemo(
+    () =>
+      machineTypes
+        .map((mt) => ({ value: mt.name, label: mt.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [machineTypes]
+  );
 
   const { data: existing, isLoading } = useAct(id);
   const saveMutation = useSaveAct();
@@ -284,10 +295,24 @@ export const ActFormPage: React.FC = () => {
         <section className={sectionClass}>
           <h2 className={sectionTitle}>I. Datos de identificación del equipo (cabezote)</h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Tipo de equipo" value={form.equipment_type} onChange={(e) => setField('equipment_type', e.target.value)} placeholder="Excavadora hidráulica / Miniexcavadora…" />
+            <Select
+              label="Machine Type"
+              required
+              value={form.equipment_type}
+              onChange={(e) => setField('equipment_type', e.target.value)}
+              options={machineTypeOptions}
+              placeholder="Select machine type"
+            />
+            <Select
+              label="Model"
+              required
+              value={form.model_type}
+              onChange={(e) => setField('model_type', e.target.value)}
+              options={REPORT_MODEL_OPTIONS}
+              placeholder="Select model"
+            />
             <Input label="Marca" value={form.brand} onChange={(e) => setField('brand', e.target.value)} placeholder="HITACHI" />
             <Input label="Línea / Serie" value={form.line_series} onChange={(e) => setField('line_series', e.target.value)} />
-            <Input label="Modelo / Tipo" value={form.model_type} onChange={(e) => setField('model_type', e.target.value)} />
             <Input label="PIN / N° Serie Máquina (Chasis)" value={form.pin_serial} onChange={(e) => setField('pin_serial', e.target.value)} />
             <Input label="Número de Motor" value={form.engine_number} onChange={(e) => setField('engine_number', e.target.value)} />
             <Input label="Código / Identificación Interna" value={form.internal_code} onChange={(e) => setField('internal_code', e.target.value)} />

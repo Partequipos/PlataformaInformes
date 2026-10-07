@@ -43,7 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, onToggle }) => {
   ];
 
   if (canSeeActs) {
-    navItems.push({ path: '/acts', label: 'Actas', icon: ClipboardList });
+    navItems.push({ path: '/acts', label: 'Acts', icon: ClipboardList });
   }
 
   navItems.push(
