@@ -32,20 +32,24 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
   const { state: authState, logout } = useAuth();
 
-  const isAdmin = authState.user?.role === 'admin';
-  const isInternal = isAdmin || authState.user?.role === 'user';
+  const role = String(authState.user?.role || '').toLowerCase().trim();
+  const isAdmin = role === 'admin';
+  const canSeeActs = isAdmin || role === 'user';
 
   const navItems: NavItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/reports', label: 'Reports', icon: FileText },
     { path: '/reports/new', label: 'New Report', icon: Plus },
-    { path: '/resources', label: 'Resources', icon: FileText },
-    { path: '/parameters', label: 'Parameters', icon: FileText },
   ];
 
-  if (isInternal) {
+  if (canSeeActs) {
     navItems.push({ path: '/acts', label: 'Actas', icon: ClipboardList });
   }
+
+  navItems.push(
+    { path: '/resources', label: 'Resources', icon: FileText },
+    { path: '/parameters', label: 'Parameters', icon: FileText }
+  );
 
   if (isAdmin) {
     navItems.push(
