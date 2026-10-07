@@ -14,16 +14,18 @@ export async function uploadFileToSupabase(fileBuffer: Buffer, fileName: string,
   let uploadMime = mimetype || 'application/octet-stream';
   let safeName = sanitizeFileName(fileName) || `photo_${Date.now()}.jpg`;
 
+  const isPdf = uploadMime === 'application/pdf' || /\.pdf$/i.test(safeName);
   const isRaster =
-    uploadMime === 'image/jpeg' ||
-    uploadMime === 'image/jpg' ||
-    uploadMime === 'image/pjpeg' ||
-    uploadMime === 'image/png' ||
-    uploadMime === 'image/webp' ||
-    uploadMime === 'image/heic' ||
-    uploadMime === 'image/heif' ||
-    uploadMime === 'application/octet-stream' ||
-    /\.(jpe?g|png|webp|heic|heif)$/i.test(safeName);
+    !isPdf &&
+    (uploadMime === 'image/jpeg' ||
+      uploadMime === 'image/jpg' ||
+      uploadMime === 'image/pjpeg' ||
+      uploadMime === 'image/png' ||
+      uploadMime === 'image/webp' ||
+      uploadMime === 'image/heic' ||
+      uploadMime === 'image/heif' ||
+      (uploadMime === 'application/octet-stream' && /\.(jpe?g|png|webp|heic|heif)$/i.test(safeName)) ||
+      /\.(jpe?g|png|webp|heic|heif)$/i.test(safeName));
 
   // Normalize to JPEG when sharp can decode (HEIC may fail on some hosts — then upload original)
   if (isRaster) {

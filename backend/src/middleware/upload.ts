@@ -6,13 +6,19 @@ const storage = multer.memoryStorage();
 
 const IMAGE_EXT = /\.(jpe?g|jpe|png|gif|webp|bmp|svg|heic|heif)$/i;
 const VIDEO_EXT = /\.(mp4|webm|mov|m4v)$/i;
+const PDF_EXT = /\.pdf$/i;
 
 const isVideoUpload = (file: Express.Multer.File): boolean => {
   const field = file.fieldname || '';
   return field === 'video' || field.startsWith('videos_');
 };
 
-// File filter — images on photos_* ; videos on videos_* (PDF photo flow stays image-only)
+const isPdfUpload = (file: Express.Multer.File): boolean => {
+  const field = file.fieldname || '';
+  return field === 'attachment' || field.startsWith('attachments_') || field.startsWith('pdfs_');
+};
+
+// File filter — images / videos / PDF attachments (actas)
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const mime = (file.mimetype || '').toLowerCase();
   const name = file.originalname || '';
@@ -26,6 +32,18 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
       return;
     }
     cb(new Error('Only video files are allowed'));
+    return;
+  }
+
+  if (isPdfUpload(file)) {
+    const pdfMime = mime === 'application/pdf';
+    const pdfExt = PDF_EXT.test(name);
+    const octetPdf = (mime === 'application/octet-stream' || mime === '') && pdfExt;
+    if (pdfMime || pdfExt || octetPdf) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only PDF files are allowed'));
     return;
   }
 
@@ -73,7 +91,11 @@ export const handleUploadError = (error: Error, req: Request, res: any, next: an
     }
   }
   
-  if (error.message === 'Only image files are allowed' || error.message === 'Only video files are allowed') {
+  if (
+    error.message === 'Only image files are allowed' ||
+    error.message === 'Only video files are allowed' ||
+    error.message === 'Only PDF files are allowed'
+  ) {
     return res.status(400).json({
       success: false,
       error: error.message

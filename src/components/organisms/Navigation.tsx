@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Shield,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -32,6 +33,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, onToggle }) => {
   const { state: authState, logout } = useAuth();
 
   const isAdmin = authState.user?.role === 'admin';
+  const isInternal = isAdmin || authState.user?.role === 'user';
 
   const navItems: NavItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
@@ -40,6 +42,10 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, onToggle }) => {
     { path: '/resources', label: 'Resources', icon: FileText },
     { path: '/parameters', label: 'Parameters', icon: FileText },
   ];
+
+  if (isInternal) {
+    navItems.push({ path: '/acts', label: 'Actas', icon: ClipboardList });
+  }
 
   if (isAdmin) {
     navItems.push(

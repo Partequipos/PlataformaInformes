@@ -1,4 +1,5 @@
 import { Report, ReportFilters, PaginatedResponse, ApiResponse, User, LoginRequest, LoginResponse, CreateReportRequest, Resource, Parameter } from '../types';
+import type { EquipmentAct } from '../constants/equipmentActs';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -626,6 +627,83 @@ class ApiService {
 
   async deleteUser(id: string): Promise<ApiResponse<boolean>> {
     const response = await fetch(`${API_BASE_URL}/auth/users/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<boolean>(response);
+  }
+
+  async getActs(params?: {
+    act_type?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<{ items: EquipmentAct[]; total: number; page: number; limit: number }>> {
+    const query = new URLSearchParams();
+    if (params?.act_type) query.set('act_type', params.act_type);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/acts${suffix}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getAct(id: string): Promise<ApiResponse<EquipmentAct>> {
+    const response = await fetch(`${API_BASE_URL}/acts/${id}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<EquipmentAct>(response);
+  }
+
+  async createAct(formData: FormData): Promise<ApiResponse<EquipmentAct>> {
+    const headers: HeadersInit = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const response = await fetch(`${API_BASE_URL}/acts`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    return this.handleResponse<EquipmentAct>(response);
+  }
+
+  async updateAct(id: string, formData: FormData): Promise<ApiResponse<EquipmentAct>> {
+    const headers: HeadersInit = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const response = await fetch(`${API_BASE_URL}/acts/${id}`, {
+      method: 'PUT',
+      headers,
+      body: formData,
+    });
+    return this.handleResponse<EquipmentAct>(response);
+  }
+
+  async deleteAct(id: string): Promise<ApiResponse<boolean>> {
+    const response = await fetch(`${API_BASE_URL}/acts/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<boolean>(response);
+  }
+
+  async deleteActPhoto(photoId: string): Promise<ApiResponse<boolean>> {
+    const response = await fetch(`${API_BASE_URL}/acts/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<boolean>(response);
+  }
+
+  async deleteActVideo(videoId: string): Promise<ApiResponse<boolean>> {
+    const response = await fetch(`${API_BASE_URL}/acts/videos/${videoId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<boolean>(response);
+  }
+
+  async deleteActAttachment(attachmentId: string): Promise<ApiResponse<boolean>> {
+    const response = await fetch(`${API_BASE_URL}/acts/attachments/${attachmentId}`, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });

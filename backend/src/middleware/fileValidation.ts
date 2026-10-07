@@ -49,6 +49,10 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
       const mime = (file.mimetype || '').toLowerCase();
       const fieldName = file.fieldname || '';
       const isVideoField = fieldName === 'video' || fieldName.startsWith('videos_');
+      const isPdfField =
+        fieldName === 'attachment' ||
+        fieldName.startsWith('attachments_') ||
+        fieldName.startsWith('pdfs_');
 
       if (isVideoField) {
         const videoMimeOk = VIDEO_MIME_TYPES.includes(mime) || mime.startsWith('video/');
@@ -66,25 +70,41 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
             error: `Video too large: ${fileName}. Maximum size: ${MAX_VIDEO_SIZE / 1024 / 1024}MB`
           });
         }
+      } else if (isPdfField) {
+        const pdfOk =
+          mime === 'application/pdf' ||
+          fileExtension === '.pdf' ||
+          ((mime === 'application/octet-stream' || mime === '') && fileExtension === '.pdf');
+        if (!pdfOk) {
+          return res.status(400).json({
+            success: false,
+            error: `PDF type not allowed: ${fileName}. Use PDF only.`
+          });
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          return res.status(400).json({
+            success: false,
+            error: `File too large: ${fileName}. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`
+          });
+        }
       } else {
-      const mimeOk = ALLOWED_MIME_TYPES.includes(mime);
-      const extOk = ALLOWED_EXTENSIONS.includes(fileExtension);
-      // Some phones send JPG as application/octet-stream — only allow with image extension
-      const octetStreamImage = mime === 'application/octet-stream' && extOk;
+        const mimeOk = ALLOWED_MIME_TYPES.includes(mime);
+        const extOk = ALLOWED_EXTENSIONS.includes(fileExtension);
+        const octetStreamImage = mime === 'application/octet-stream' && extOk;
 
-      if (!mimeOk && !extOk && !octetStreamImage) {
-        return res.status(400).json({
-          success: false,
-          error: `File type not allowed: ${fileName}. Use JPEG, PNG, GIF or WebP.`
-        });
-      }
+        if (!mimeOk && !extOk && !octetStreamImage) {
+          return res.status(400).json({
+            success: false,
+            error: `File type not allowed: ${fileName}. Use JPEG, PNG, GIF or WebP.`
+          });
+        }
 
-      if (file.size > MAX_FILE_SIZE) {
-        return res.status(400).json({
-          success: false,
-          error: `File too large: ${fileName}. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`
-        });
-      }
+        if (file.size > MAX_FILE_SIZE) {
+          return res.status(400).json({
+            success: false,
+            error: `File too large: ${fileName}. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`
+          });
+        }
       }
 
       // Path traversal only (spaces and unicode names are OK)

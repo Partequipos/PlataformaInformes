@@ -23,6 +23,9 @@ import AdminPage from './pages/AdminPage';
 import { UsersAdminPage } from './pages/UsersAdminPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { ParametersPage } from './pages/ParametersPage';
+import { ActsPage } from './pages/ActsPage';
+import { ActFormPage } from './pages/ActFormPage';
+import { ActHtmlPage } from './pages/ActHtmlPage';
 import { LoadingSpinner } from './components/molecules/LoadingSpinner';
 
 // Create a client
@@ -166,6 +169,38 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <ParametersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acts"
+        element={
+          <ProtectedRoute>
+            <ActsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acts/new"
+        element={
+          <ProtectedRoute>
+            <ActFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acts/:id/edit"
+        element={
+          <ProtectedRoute>
+            <ActFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acts/:id/html"
+        element={
+          <ProtectedRoute>
+            <ActHtmlPage />
           </ProtectedRoute>
         }
       />

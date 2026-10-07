@@ -21,6 +21,7 @@ import devRoutes from './routes/dev';
 import resourceRoutes from './routes/resource';
 import parameterRoutes from './routes/parameter';
 import cleanRoutes from './routes/clean';
+import actRoutes from './routes/acts';
 
 
 console.log('NODE_ENV:', process.env.NODE_ENV); // <-- Diagnóstico
@@ -123,6 +124,7 @@ app.use('/api/dev', devRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/parameters', parameterRoutes);
 app.use('/api/clean', cleanRoutes);
+app.use('/api/acts', actRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
