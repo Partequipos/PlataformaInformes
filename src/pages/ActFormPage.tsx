@@ -333,7 +333,7 @@ export const ActFormPage: React.FC = () => {
         </section>
 
         <section className={sectionClass}>
-          <h2 className={sectionTitle}>I. Datos de identificación del equipo (cabezote)</h2>
+          <h2 className={sectionTitle}>I. Datos de identificación del equipo (encabezado)</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <Select
               label="Tipo de máquina"

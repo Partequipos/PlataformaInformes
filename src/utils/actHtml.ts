@@ -154,7 +154,7 @@ export function buildActHtml(act: EquipmentAct): string {
       </div>
     </header>
 
-    <h2>I. DATOS DE IDENTIFICACIÓN DEL EQUIPO (CABEZOTE)</h2>
+    <h2>I. DATOS DE IDENTIFICACIÓN DEL EQUIPO (ENCABEZADO)</h2>
     ${fieldRow('Tipo de máquina', act.equipment_type)}
     ${fieldRow('Modelo', act.model_type)}
     ${fieldRow('Línea / Serie', act.line_series)}
@@ -173,7 +173,7 @@ export function buildActHtml(act: EquipmentAct): string {
     <div class="block">${escapeHtml(act.works || '—')}</div>
 
     <h2>${escapeHtml(stateTitle)}</h2>
-    <p class="intro">Por medio de la presente acta se hace constar que el equipo descrito en el cabezote ${escapeHtml(deliveryPhrase)}:</p>
+    <p class="intro">Por medio de la presente acta se hace constar que el equipo descrito en el encabezado ${escapeHtml(deliveryPhrase)}:</p>
     <p class="label">1. Estado Mecánico y Operativo</p>
     <div class="block">${escapeHtml(act.mechanical_state || '—')}</div>
     <p class="label">2. Lubricación</p>

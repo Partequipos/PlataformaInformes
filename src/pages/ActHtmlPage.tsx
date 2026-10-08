@@ -113,7 +113,7 @@ export const ActHtmlPage: React.FC = () => {
         </header>
 
         <section className="mb-8 space-y-2">
-          <h2 className="font-display text-lg font-bold text-brand-red">I. Datos de identificación del equipo (cabezote)</h2>
+          <h2 className="font-display text-lg font-bold text-brand-red">I. Datos de identificación del equipo (encabezado)</h2>
           {[
             ['Tipo de máquina', act.equipment_type],
             ['Modelo', act.model_type],
@@ -142,7 +142,7 @@ export const ActHtmlPage: React.FC = () => {
         <section className="mb-8 space-y-3">
           <h2 className="font-display text-lg font-bold text-brand-red">{stateTitle}</h2>
           <p className="text-sm text-slate-600">
-            Por medio de la presente acta se hace constar que el equipo descrito en el cabezote se{' '}
+            Por medio de la presente acta se hace constar que el equipo descrito en el encabezado se{' '}
             {act.act_type === 'entry' ? 'recibe en taller' : 'entrega al operador'} bajo las siguientes condiciones:
           </p>
           <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.mechanical_state}</div>
