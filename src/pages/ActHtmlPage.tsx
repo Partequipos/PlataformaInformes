@@ -6,7 +6,12 @@ import { Button } from '../components/atoms/Button';
 import { useAuth } from '../context/AuthContext';
 import { useAct } from '../hooks/useActs';
 import { buildActHtml } from '../utils/actHtml';
-import { COMPANY_LOGO_URL } from '../constants/equipmentActs';
+import {
+  COMPANY_LOGO_URL,
+  DELIVERY_INSPECTION_SECTIONS,
+  INSPECTION_RATING_LABEL,
+  actTitle,
+} from '../constants/equipmentActs';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
 
 export const ActHtmlPage: React.FC = () => {
@@ -16,7 +21,7 @@ export const ActHtmlPage: React.FC = () => {
   const { data: act, isLoading, error } = useAct(id);
   const [viewer, setViewer] = useState<{ kind: 'photo' | 'video'; url: string; name: string } | null>(null);
 
-  const htmlTitle = act?.act_type === 'exit' ? 'Acta de Salida' : 'Acta de Entrada';
+  const htmlTitle = actTitle(act?.act_type);
 
   const downloadHtml = () => {
     if (!act) return;
@@ -79,6 +84,7 @@ export const ActHtmlPage: React.FC = () => {
     act.act_type === 'entry'
       ? 'III. Estado del equipo y condiciones de entrada'
       : 'III. Estado del equipo y condiciones de salida';
+  const isDelivery = act.act_type === 'delivery';
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -133,12 +139,15 @@ export const ActHtmlPage: React.FC = () => {
           ))}
         </section>
 
+        {!isDelivery && (
         <section className="mb-8 space-y-3">
           <h2 className="font-display text-lg font-bold text-brand-red">{motiveTitle}</h2>
           <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm text-slate-800">{act.motive || '—'}</div>
           <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm text-slate-800">{act.works || '—'}</div>
         </section>
+        )}
 
+        {!isDelivery && (
         <section className="mb-8 space-y-3">
           <h2 className="font-display text-lg font-bold text-brand-red">{stateTitle}</h2>
           <p className="text-sm text-slate-600">
@@ -149,9 +158,30 @@ export const ActHtmlPage: React.FC = () => {
           <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.lubrication}</div>
           <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.operation_test}</div>
         </section>
+        )}
+
+        {isDelivery &&
+          DELIVERY_INSPECTION_SECTIONS.map((section) => (
+            <section key={section.id} className="mb-8 space-y-2">
+              <h2 className="font-display text-lg font-bold text-brand-red">{section.title}</h2>
+              {section.items.map((item) => {
+                const rating = act.inspection?.[section.id]?.[item.key] || '';
+                return (
+                  <div key={item.key} className="grid gap-1 border-b border-dotted border-slate-200 py-1.5 text-sm md:grid-cols-[240px_1fr]">
+                    <span className="font-semibold text-slate-500">{item.label}</span>
+                    <span className="text-slate-800">{INSPECTION_RATING_LABEL[rating] || '—'}</span>
+                  </div>
+                );
+              })}
+              <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">
+                <span className="font-semibold text-slate-500">Comentarios: </span>
+                {act.inspection?.[section.id]?.comentarios || '—'}
+              </div>
+            </section>
+          ))}
 
         <section className="mb-8 space-y-3">
-          <h2 className="font-display text-lg font-bold text-brand-red">IV. Imágenes y videos</h2>
+          <h2 className="font-display text-lg font-bold text-brand-red">Imágenes y videos</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {photos.map((p) => (
               <button

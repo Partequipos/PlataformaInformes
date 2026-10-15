@@ -20,8 +20,13 @@ import {
   DEFAULT_LUBRICATION,
   DEFAULT_MECHANICAL_STATE,
   DEFAULT_OPERATION_TEST,
+  DELIVERY_INSPECTION_SECTIONS,
+  INSPECTION_RATING_OPTIONS,
+  actTitle,
+  emptyInspection,
   type ActType,
   type EquipmentAct,
+  type InspectionValues,
 } from '../constants/equipmentActs';
 
 const PHOTO_BATCH_SIZE = 2;
@@ -58,6 +63,7 @@ type FormState = {
   receiver_name: string;
   receiver_cc: string;
   receiver_signature: string;
+  inspection: InspectionValues;
 };
 
 const emptyForm = (type: ActType): FormState => ({
@@ -87,6 +93,7 @@ const emptyForm = (type: ActType): FormState => ({
   receiver_name: '',
   receiver_cc: '',
   receiver_signature: '',
+  inspection: emptyInspection(),
 });
 
 const mapActToForm = (act: EquipmentAct): FormState => ({
@@ -116,7 +123,17 @@ const mapActToForm = (act: EquipmentAct): FormState => ({
   receiver_name: act.receiver_name || '',
   receiver_cc: act.receiver_cc || '',
   receiver_signature: act.receiver_signature || '',
+  inspection: mergeInspection(act.inspection),
 });
+
+const mergeInspection = (saved?: InspectionValues): InspectionValues => {
+  const base = emptyInspection();
+  if (!saved) return base;
+  for (const section of DELIVERY_INSPECTION_SECTIONS) {
+    base[section.id] = { ...base[section.id], ...(saved[section.id] || {}) };
+  }
+  return base;
+};
 
 const sectionClass = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4';
 const sectionTitle = 'font-display text-lg font-bold text-brand-red border-b border-slate-100 pb-2';
@@ -127,7 +144,13 @@ export const ActFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const initialType = (searchParams.get('type') === 'exit' ? 'exit' : 'entry') as ActType;
+  const initialType = (
+    searchParams.get('type') === 'exit'
+      ? 'exit'
+      : searchParams.get('type') === 'delivery'
+        ? 'delivery'
+        : 'entry'
+  ) as ActType;
   const isEdit = Boolean(id);
   const { machineTypes } = useTypes();
 
@@ -177,10 +200,7 @@ export const ActFormPage: React.FC = () => {
     );
   }, [existing]);
 
-  const title = useMemo(
-    () => (form.act_type === 'entry' ? 'Acta de Entrada' : 'Acta de Salida'),
-    [form.act_type]
-  );
+  const title = useMemo(() => actTitle(form.act_type), [form.act_type]);
 
   if (role === 'viewer') {
     return <Navigate to="/dashboard" replace />;
@@ -198,6 +218,19 @@ export const ActFormPage: React.FC = () => {
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const setInspectionValue = (sectionId: string, key: string, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      inspection: {
+        ...prev.inspection,
+        [sectionId]: {
+          ...(prev.inspection[sectionId] || {}),
+          [key]: value,
+        },
+      },
+    }));
   };
 
   const buildMetaFormData = (): FormData => {
@@ -313,6 +346,7 @@ export const ActFormPage: React.FC = () => {
               options={[
                 { value: 'entry', label: 'Acta de Entrada' },
                 { value: 'exit', label: 'Acta de Salida' },
+                { value: 'delivery', label: 'Acta de Entrega' },
               ]}
             />
             <Select
@@ -362,6 +396,7 @@ export const ActFormPage: React.FC = () => {
           </div>
         </section>
 
+        {form.act_type !== 'delivery' && (
         <section className={sectionClass}>
           <h2 className={sectionTitle}>
             {form.act_type === 'entry'
@@ -386,7 +421,9 @@ export const ActFormPage: React.FC = () => {
             placeholder={'Diagnóstico especializado…\nMantenimiento correctivo…'}
           />
         </section>
+        )}
 
+        {form.act_type !== 'delivery' && (
         <section className={sectionClass}>
           <h2 className={sectionTitle}>
             {form.act_type === 'entry'
@@ -400,9 +437,34 @@ export const ActFormPage: React.FC = () => {
           <label className="form-label">3. Prueba de operación</label>
           <textarea className="form-input min-h-[80px]" value={form.operation_test} onChange={(e) => setField('operation_test', e.target.value)} />
         </section>
+        )}
+
+        {form.act_type === 'delivery' &&
+          DELIVERY_INSPECTION_SECTIONS.map((section) => (
+            <section key={section.id} className={sectionClass}>
+              <h2 className={sectionTitle}>{section.title}</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {section.items.map((item) => (
+                  <Select
+                    key={item.key}
+                    label={item.label}
+                    value={form.inspection[section.id]?.[item.key] || ''}
+                    onChange={(e) => setInspectionValue(section.id, item.key, e.target.value)}
+                    options={INSPECTION_RATING_OPTIONS}
+                  />
+                ))}
+              </div>
+              <label className="form-label">Comentarios</label>
+              <textarea
+                className="form-input min-h-[80px]"
+                value={form.inspection[section.id]?.comentarios || ''}
+                onChange={(e) => setInspectionValue(section.id, 'comentarios', e.target.value)}
+              />
+            </section>
+          ))}
 
         <section className={sectionClass}>
-          <h2 className={sectionTitle}>IV. Imágenes y videos</h2>
+          <h2 className={sectionTitle}>Imágenes y videos</h2>
           <PhotoUpload
             photos={photos}
             onPhotosChange={setPhotos}

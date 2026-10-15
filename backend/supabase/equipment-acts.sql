@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS equipment_acts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    act_type VARCHAR(20) NOT NULL CHECK (act_type IN ('entry', 'exit')),
+    act_type VARCHAR(20) NOT NULL CHECK (act_type IN ('entry', 'exit', 'delivery')),
     location VARCHAR(255) NOT NULL,
     act_date DATE NOT NULL DEFAULT CURRENT_DATE,
     status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'completed')),
@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS equipment_acts (
     receiver_name VARCHAR(255),
     receiver_cc VARCHAR(100),
     receiver_signature TEXT,
+    inspection JSONB DEFAULT '{}'::jsonb,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

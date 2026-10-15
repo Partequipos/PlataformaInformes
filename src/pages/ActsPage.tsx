@@ -8,6 +8,7 @@ import { Button } from '../components/atoms/Button';
 import { Select } from '../components/atoms/Select';
 import { useAuth } from '../context/AuthContext';
 import { useActs, useDeleteAct } from '../hooks/useActs';
+import { actTypeLabel } from '../constants/equipmentActs';
 
 export const ActsPage: React.FC = () => {
   const { state } = useAuth();
@@ -65,6 +66,11 @@ export const ActsPage: React.FC = () => {
                 <Plus className="mr-2 h-4 w-4" /> Acta de Salida
               </Button>
             </Link>
+            <Link to="/acts/new?type=delivery">
+              <Button type="button" variant="outline">
+                <Plus className="mr-2 h-4 w-4" /> Acta de Entrega
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -77,6 +83,7 @@ export const ActsPage: React.FC = () => {
               { value: '', label: 'Todas' },
               { value: 'entry', label: 'Entrada' },
               { value: 'exit', label: 'Salida' },
+              { value: 'delivery', label: 'Entrega' },
             ]}
           />
         </div>
@@ -99,7 +106,7 @@ export const ActsPage: React.FC = () => {
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1 rounded-md bg-brand-soft px-2 py-1 text-xs font-semibold text-brand-red">
                       <ClipboardList className="h-3.5 w-3.5" />
-                      {act.act_type === 'entry' ? 'Entrada' : 'Salida'}
+                      {actTypeLabel(act.act_type)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-700">{act.location}</td>

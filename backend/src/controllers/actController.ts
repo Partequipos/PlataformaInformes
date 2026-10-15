@@ -7,7 +7,7 @@ import { sanitizeFileName } from '../middleware/fileValidation';
 const INTERNAL_ROLES = new Set(['admin', 'user']);
 
 type ActPayload = {
-  act_type: 'entry' | 'exit';
+  act_type: 'entry' | 'exit' | 'delivery';
   location: string;
   act_date?: string;
   status?: 'draft' | 'completed';
@@ -33,7 +33,10 @@ type ActPayload = {
   receiver_name?: string;
   receiver_cc?: string;
   receiver_signature?: string;
+  inspection?: Record<string, Record<string, string>>;
 };
+
+const ACT_TYPES = new Set(['entry', 'exit', 'delivery']);
 
 function denyIfViewer(req: AuthRequest, res: Response): boolean {
   const role = req.user?.role || '';
@@ -183,8 +186,8 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
     if (denyIfViewer(req, res)) return;
 
     const data = parseActData(req.body as Record<string, unknown>);
-    if (!data.act_type || !['entry', 'exit'].includes(data.act_type)) {
-      res.status(400).json({ success: false, error: 'act_type debe ser entry o exit' });
+    if (!data.act_type || !ACT_TYPES.has(data.act_type)) {
+      res.status(400).json({ success: false, error: 'act_type debe ser entry, exit o delivery' });
       return;
     }
     if (!data.location?.trim()) {
@@ -200,10 +203,10 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
         internal_code, manufacture_date, load_capacity, gps_serial, gps_install_date,
         motive, works, mechanical_state, lubrication, operation_test,
         deliverer_name, deliverer_cc, deliverer_signature,
-        receiver_name, receiver_cc, receiver_signature
+        receiver_name, receiver_cc, receiver_signature, inspection
       ) VALUES (
         $1,$2,$3,COALESCE($4::date, CURRENT_DATE),COALESCE($5,'draft'),
-        $6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
+        $6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28::jsonb
       ) RETURNING id`,
       [
         req.user?.id,
@@ -233,6 +236,7 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
         data.receiver_name || null,
         data.receiver_cc || null,
         data.receiver_signature || null,
+        JSON.stringify(data.inspection || {}),
       ]
     );
 
@@ -262,7 +266,7 @@ export const getActs = async (req: AuthRequest, res: Response): Promise<void> =>
 
     const params: unknown[] = [];
     let where = 'WHERE 1=1';
-    if (actType === 'entry' || actType === 'exit') {
+    if (actType && ACT_TYPES.has(actType)) {
       params.push(actType);
       where += ` AND act_type = $${params.length}`;
     }
@@ -330,6 +334,11 @@ export const updateAct = async (req: AuthRequest, res: Response): Promise<void> 
         values.push(data[col]);
         sets.push(`${col} = $${values.length}`);
       }
+    }
+
+    if (data.inspection !== undefined) {
+      values.push(JSON.stringify(data.inspection));
+      sets.push(`inspection = $${values.length}::jsonb`);
     }
 
     if (sets.length > 0) {

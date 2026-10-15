@@ -1,4 +1,4 @@
-import { COMPANY_LOGO_URL } from '../constants/equipmentActs';
+import { COMPANY_LOGO_URL, DELIVERY_INSPECTION_SECTIONS, INSPECTION_RATING_LABEL, actTitle } from '../constants/equipmentActs';
 import type { EquipmentAct } from '../constants/equipmentActs';
 
 const escapeHtml = (value: string): string =>
@@ -70,7 +70,8 @@ document.addEventListener('click', function (event) {
 
 export function buildActHtml(act: EquipmentAct): string {
   const isEntry = act.act_type === 'entry';
-  const title = isEntry ? 'Acta de Entrada' : 'Acta de Salida';
+  const isDelivery = act.act_type === 'delivery';
+  const title = actTitle(act.act_type);
   const motiveTitle = isEntry ? 'II. MOTIVO DE INGRESO Y TRABAJOS A REALIZAR' : 'II. MOTIVO DE SALIDA Y TRABAJOS REALIZADOS';
   const stateTitle = isEntry
     ? 'III. ESTADO DEL EQUIPO Y CONDICIONES DE ENTRADA'
@@ -96,6 +97,35 @@ export function buildActHtml(act: EquipmentAct): string {
       return `<li><a href="${href}" target="_blank" rel="noopener noreferrer">${name}</a></li>`;
     })
     .join('');
+
+  const inspectionHtml = isDelivery
+    ? DELIVERY_INSPECTION_SECTIONS.map((section) => {
+        const rows = section.items
+          .map((item) => {
+            const rating = act.inspection?.[section.id]?.[item.key] || '';
+            return fieldRow(item.label, INSPECTION_RATING_LABEL[rating] || '—');
+          })
+          .join('');
+        const comments = escapeHtml(act.inspection?.[section.id]?.comentarios || '—');
+        return `<h2>${escapeHtml(section.title)}</h2>${rows}<p class="label">Comentarios</p><div class="block">${comments}</div>`;
+      }).join('')
+    : '';
+
+  const motiveHtml = isDelivery
+    ? ''
+    : `<h2>${escapeHtml(motiveTitle)}</h2>
+    <p class="label">${escapeHtml(motiveLabel)}</p>
+    <div class="block">${escapeHtml(act.motive || '—')}</div>
+    <p class="label">${escapeHtml(worksLabel)}</p>
+    <div class="block">${escapeHtml(act.works || '—')}</div>
+    <h2>${escapeHtml(stateTitle)}</h2>
+    <p class="intro">Por medio de la presente acta se hace constar que el equipo descrito en el encabezado ${escapeHtml(deliveryPhrase)}:</p>
+    <p class="label">1. Estado Mecánico y Operativo</p>
+    <div class="block">${escapeHtml(act.mechanical_state || '—')}</div>
+    <p class="label">2. Lubricación</p>
+    <div class="block">${escapeHtml(act.lubrication || '—')}</div>
+    <p class="label">3. Prueba de Operación</p>
+    <div class="block">${escapeHtml(act.operation_test || '—')}</div>`;
 
   const delivererSig = act.deliverer_signature
     ? `<img class="signature" src="${escapeHtml(absoluteUrl(act.deliverer_signature))}" alt="Firma entrega" />`
@@ -166,22 +196,10 @@ export function buildActHtml(act: EquipmentAct): string {
     ${fieldRow('Dispositivo GPS (Rastrack S.A.S.) — Serial', act.gps_serial)}
     ${fieldRow('Fecha Instalación GPS', act.gps_install_date)}
 
-    <h2>${escapeHtml(motiveTitle)}</h2>
-    <p class="label">${escapeHtml(motiveLabel)}</p>
-    <div class="block">${escapeHtml(act.motive || '—')}</div>
-    <p class="label">${escapeHtml(worksLabel)}</p>
-    <div class="block">${escapeHtml(act.works || '—')}</div>
+    ${motiveHtml}
+    ${inspectionHtml}
 
-    <h2>${escapeHtml(stateTitle)}</h2>
-    <p class="intro">Por medio de la presente acta se hace constar que el equipo descrito en el encabezado ${escapeHtml(deliveryPhrase)}:</p>
-    <p class="label">1. Estado Mecánico y Operativo</p>
-    <div class="block">${escapeHtml(act.mechanical_state || '—')}</div>
-    <p class="label">2. Lubricación</p>
-    <div class="block">${escapeHtml(act.lubrication || '—')}</div>
-    <p class="label">3. Prueba de Operación</p>
-    <div class="block">${escapeHtml(act.operation_test || '—')}</div>
-
-    <h2>IV. IMÁGENES Y VIDEOS</h2>
+    <h2>IMÁGENES Y VIDEOS</h2>
     <p class="label">Imágenes</p>
     ${mediaGrid('photo', photos)}
     <p class="label" style="margin-top:14px">Videos</p>
