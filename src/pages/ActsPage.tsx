@@ -9,7 +9,7 @@ import { Select } from '../components/atoms/Select';
 import { useAuth } from '../context/AuthContext';
 import { useActs, useDeleteAct } from '../hooks/useActs';
 import { actTitle, actTypeLabel } from '../constants/equipmentActs';
-import { downloadActPdf } from '../utils/downloadActPdf';
+import { downloadActPdf, downloadBlankDeliveryPdf } from '../utils/downloadActPdf';
 
 export const ActsPage: React.FC = () => {
   const { state } = useAuth();
@@ -17,6 +17,7 @@ export const ActsPage: React.FC = () => {
   const [actType, setActType] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [pdfId, setPdfId] = useState<string | null>(null);
+  const [blankLoading, setBlankLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const { data, isLoading, error } = useActs({
     act_type: actType || undefined,
@@ -74,6 +75,24 @@ export const ActsPage: React.FC = () => {
                 <Plus className="mr-2 h-4 w-4" /> Acta de Entrega
               </Button>
             </Link>
+            <Button
+              type="button"
+              variant="secondary"
+              isLoading={blankLoading}
+              onClick={async () => {
+                setPdfError(null);
+                setBlankLoading(true);
+                try {
+                  await downloadBlankDeliveryPdf();
+                } catch (err) {
+                  setPdfError(err instanceof Error ? err.message : 'No se pudo descargar el formato en blanco');
+                } finally {
+                  setBlankLoading(false);
+                }
+              }}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> Formato en blanco
+            </Button>
           </div>
         </div>
 

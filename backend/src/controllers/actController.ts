@@ -3,7 +3,7 @@ import pool from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { uploadFileToSupabase, deleteFilesFromSupabase } from '../utils/supabaseStorage';
 import { sanitizeFileName } from '../middleware/fileValidation';
-import { generateActPdf } from '../services/actPdfService';
+import { generateActPdf, generateBlankDeliveryPdf } from '../services/actPdfService';
 
 const INTERNAL_ROLES = new Set(['admin', 'user']);
 
@@ -323,6 +323,20 @@ const safeFilePart = (value: string): string =>
     .replace(/[^a-zA-Z0-9._-]+/g, '_')
     .replace(/_+/g, '_')
     .slice(0, 80);
+
+export const downloadBlankDeliveryPdf = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (denyIfViewer(req, res)) return;
+    const pdfBuffer = await generateBlankDeliveryPdf();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Acta_Entrega_formato_en_blanco.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('downloadBlankDeliveryPdf error:', error);
+    res.status(500).json({ success: false, error: 'No se pudo generar el formato en blanco' });
+  }
+};
 
 export const downloadActPdf = async (req: AuthRequest, res: Response): Promise<void> => {
   try {

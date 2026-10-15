@@ -354,7 +354,7 @@ async function buildActHtml(act: ActPdfInput): Promise<string> {
 </html>`;
 }
 
-export async function generateActPdf(act: ActPdfInput): Promise<Buffer> {
+async function htmlToPdf(html: string): Promise<Buffer> {
   const executablePath = await chromium.executablePath();
   if (!executablePath) {
     throw new Error('Chromium executablePath not found. PDF generation is not supported in this environment.');
@@ -367,7 +367,6 @@ export async function generateActPdf(act: ActPdfInput): Promise<Buffer> {
   });
   try {
     const page = await browser.newPage();
-    const html = await buildActHtml(act);
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -379,4 +378,124 @@ export async function generateActPdf(act: ActPdfInput): Promise<Buffer> {
   } finally {
     await browser.close();
   }
+}
+
+const writeLine = (label: string): string =>
+  `<div class="write-line"><span>${escapeHtml(label)}</span><span class="line"></span></div>`;
+
+const blankChecks = '☐ Bueno &nbsp;&nbsp; ☐ Regular &nbsp;&nbsp; ☐ Malo &nbsp;&nbsp; ☐ No aplica';
+
+function blankDeliveryHtml(logo: string): string {
+  const identity = [
+    'Tipo de máquina',
+    'Modelo',
+    'Línea / Serie',
+    'PIN / N° Serie Máquina (Chasis)',
+    'Número de Motor',
+    'Código / Identificación Interna',
+    'Año / Mes de Fabricación',
+    'Capacidad de Carga',
+    'Serial GPS (Rastrack S.A.S.)',
+    'Fecha Instalación GPS',
+  ]
+    .map(writeLine)
+    .join('');
+
+  const sections = INSPECTION_SECTIONS.map((section) => {
+    const rows = section.items
+      .map(
+        (item) =>
+          `<tr><td class="item">${escapeHtml(item.label)}</td><td class="checks">${blankChecks}</td></tr>`
+      )
+      .join('');
+    return `
+      <div class="section">
+        <h2>${escapeHtml(section.title)}</h2>
+        <table class="blank-table"><tbody>${rows}</tbody></table>
+        ${writeLine('Comentarios')}
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Acta de Entrega — formato en blanco</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 12px; color: #333; font-size: 12px; }
+  .logo-container { width: 100%; display: flex; justify-content: center; margin-bottom: 6px; }
+  .logo-img { width: 100%; max-width: 420px; height: auto; }
+  .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 12px; }
+  .header h1 { color: #2563eb; margin: 0 0 4px; font-size: 20px; }
+  .note { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; margin: 10px 0 14px; color: #334155; }
+  .section { margin: 12px 0; page-break-inside: avoid; }
+  .section h2 { color: #2563eb; border-bottom: 1px solid #ddd; padding-bottom: 3px; font-size: 14px; margin: 0 0 6px; }
+  .write-line { display: flex; align-items: flex-end; gap: 8px; margin: 7px 0; }
+  .write-line span:first-child { min-width: 230px; font-weight: 700; color: #2563eb; }
+  .line { flex: 1; border-bottom: 1px solid #94a3b8; height: 16px; }
+  .blank-table { width: 100%; border-collapse: collapse; }
+  .blank-table td { border-bottom: 1px solid #e2e8f0; padding: 5px 4px; vertical-align: middle; }
+  .item { width: 38%; }
+  .checks { letter-spacing: 0.2px; }
+  .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .sig-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; min-height: 120px; }
+  .sig-box strong { color: #2563eb; }
+  .sig-box .write-line span:first-child { min-width: 72px; }
+  .footer { margin-top: 18px; text-align: center; font-size: 11px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="logo-container"><img class="logo-img" src="${logo}" alt="Logo Partequipos" /></div>
+  <div class="header">
+    <h1>Acta de Entrega</h1>
+    <p>Formato en blanco para diligenciar a mano e imprimir</p>
+  </div>
+  <div class="note">
+    Diligencie este formato en sitio, recoja la firma del cliente y luego digitalícelo en la plataforma.
+    Las fotografías y los videos se adjuntan al cargar el acta; no se diligencian en este formato impreso.
+  </div>
+  <div class="section">
+    <h2>Encabezado</h2>
+    ${writeLine('Lugar')}
+    ${writeLine('Fecha')}
+  </div>
+  <div class="section">
+    <h2>Datos de identificación del equipo (encabezado)</h2>
+    ${identity}
+  </div>
+  ${sections}
+  <div class="section">
+    <h2>Constancia de firmas y conformidad</h2>
+    <p>Las partes firman a conformidad el recibo y entrega del equipo en la fecha estipulada.</p>
+    <div class="signatures">
+      <div class="sig-box">
+        <strong>ENTREGA</strong>
+        ${writeLine('Nombre')}
+        ${writeLine('C.C.')}
+        ${writeLine('Firma')}
+      </div>
+      <div class="sig-box">
+        <strong>RECIBE</strong>
+        ${writeLine('Nombre')}
+        ${writeLine('C.C.')}
+        ${writeLine('Firma')}
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <p>Partequipos — Plataforma de Informes de Maquinaria</p>
+    <p>Formato de impresión. Marque una opción por ítem: Bueno, Regular, Malo o No aplica.</p>
+  </div>
+</body>
+</html>`;
+}
+
+export async function generateBlankDeliveryPdf(): Promise<Buffer> {
+  const logo = await logoDataUrl();
+  return htmlToPdf(blankDeliveryHtml(logo));
+}
+
+export async function generateActPdf(act: ActPdfInput): Promise<Buffer> {
+  const html = await buildActHtml(act);
+  return htmlToPdf(html);
 }
