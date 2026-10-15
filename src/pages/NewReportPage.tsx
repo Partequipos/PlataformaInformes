@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateReport, useReport, useUpdateReport } from '../hooks/useReports';
 import { useAuth } from '../context/AuthContext';
 import { useTypes } from '../context/TypesContext';
-import { REPORT_MODEL_OPTIONS } from '../constants/reportModels';
+import { resolveModelOptions } from '../constants/reportModels';
 import { DashboardLayout } from '../components/templates/DashboardLayout';
 import { Button } from '../components/atoms/Button';
 import { Input } from '../components/atoms/Input';
@@ -39,7 +39,7 @@ export const NewReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { state: authState } = useAuth();
-  const { machineTypes, componentTypes } = useTypes();
+  const { machineTypes, componentTypes, machineModels } = useTypes();
   const createReportMutation = useCreateReport();
   const updateReportMutation = useUpdateReport();
 
@@ -223,7 +223,10 @@ export const NewReportPage: React.FC = () => {
     }
   }, [isEditMode]);
 
-  const modelOptions = REPORT_MODEL_OPTIONS;
+  const modelOptions = useMemo(
+    () => resolveModelOptions(machineModels, reportData.model),
+    [machineModels, reportData.model]
+  );
 
   const statusOptions = [
     { value: 'CORRECTED', label: 'Corrected' },

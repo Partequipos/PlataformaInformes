@@ -351,6 +351,54 @@ class ApiService {
     return this.handleResponse<boolean>(response);
   }
 
+  async getMachineModels(): Promise<ApiResponse<Array<{
+    id: string;
+    name: string;
+    description: string;
+    created_at: string;
+    updated_at: string;
+  }>>> {
+    const response = await fetch(`${API_BASE_URL}/machine-models`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async createMachineModel(data: { name: string; description: string }): Promise<ApiResponse<{
+    id: string;
+    name: string;
+    description: string;
+  }>> {
+    const response = await fetch(`${API_BASE_URL}/machine-models`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateMachineModel(id: string, data: { name: string; description: string }): Promise<ApiResponse<{
+    id: string;
+    name: string;
+    description: string;
+  }>> {
+    const response = await fetch(`${API_BASE_URL}/machine-models/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteMachineModel(id: string): Promise<ApiResponse<boolean>> {
+    const response = await fetch(`${API_BASE_URL}/machine-models/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<boolean>(response);
+  }
+
   // Component Types methods
   async getComponentTypes(): Promise<ApiResponse<Array<{
     id: string;

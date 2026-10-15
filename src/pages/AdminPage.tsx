@@ -16,21 +16,28 @@ const AdminPage: React.FC = () => {
   const {
     machineTypes,
     componentTypes,
+    machineModels,
     loading,
     error,
     createMachineType,
     createComponentType,
+    createMachineModel,
     updateMachineType,
     updateComponentType,
+    updateMachineModel,
     deleteMachineType,
     deleteComponentType,
+    deleteMachineModel,
   } = useTypes();
 
-  const [activeTab, setActiveTab] = useState<'machines' | 'components'>('machines');
+  const [activeTab, setActiveTab] = useState<'machines' | 'components' | 'models'>('machines');
   const [editingMachine, setEditingMachine] = useState<string | null>(null);
   const [editingComponent, setEditingComponent] = useState<string | null>(null);
+  const [editingModel, setEditingModel] = useState<string | null>(null);
   const [machineForm, setMachineForm] = useState<TypeFormData>({ name: '', description: '' });
   const [componentForm, setComponentForm] = useState<TypeFormData>({ name: '', description: '' });
+  const [modelForm, setModelForm] = useState<TypeFormData>({ name: '', description: '' });
+  const [modelQuery, setModelQuery] = useState('');
 
   const navigate = useNavigate();
 
@@ -64,7 +71,41 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const handleEditMachine = (machine: any) => {
+  const handleModelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingModel) {
+        await updateMachineModel(editingModel, modelForm);
+        setEditingModel(null);
+      } else {
+        await createMachineModel(modelForm);
+      }
+      setModelForm({ name: '', description: '' });
+    } catch (saveError) {
+      console.error('Error saving model:', saveError);
+    }
+  };
+
+  const handleEditModel = (model: { id: string; name: string; description?: string }) => {
+    setEditingModel(model.id);
+    setModelForm({ name: model.name, description: model.description || '' });
+  };
+
+  const handleDeleteModel = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this model?')) {
+      try {
+        await deleteMachineModel(id);
+      } catch (deleteError) {
+        console.error('Error deleting model:', deleteError);
+      }
+    }
+  };
+
+  const filteredModels = machineModels.filter((model) =>
+    model.name.toLowerCase().includes(modelQuery.trim().toLowerCase())
+  );
+
+  const handleEditMachine = (machine: { id: string; name: string; description: string }) => {
     setEditingMachine(machine.id);
     setMachineForm({ name: machine.name, description: machine.description });
   };
@@ -77,8 +118,10 @@ const AdminPage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingMachine(null);
     setEditingComponent(null);
+    setEditingModel(null);
     setMachineForm({ name: '', description: '' });
     setComponentForm({ name: '', description: '' });
+    setModelForm({ name: '', description: '' });
   };
 
   const handleDeleteMachine = async (id: string) => {
@@ -114,7 +157,7 @@ const AdminPage: React.FC = () => {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Administration</h1>
-          <p className="text-gray-600">Manage machine and component types in the system</p>
+          <p className="text-gray-600">Manage machine types, component types and models</p>
         </div>
         <Button variant="secondary" onClick={() => navigate('/dashboard')}>
           Back to main page
@@ -151,6 +194,17 @@ const AdminPage: React.FC = () => {
             )}
           >
             Component Types ({componentTypes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('models')}
+            className={cn(
+              'py-2 px-1 border-b-2 font-medium text-sm',
+              activeTab === 'models'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            )}
+          >
+            Models ({machineModels.length})
           </button>
         </nav>
       </div>
@@ -328,6 +382,99 @@ const AdminPage: React.FC = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteComponent(component.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'models' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">
+              {editingModel ? 'Edit Model' : 'New Model'}
+            </h2>
+            <form onSubmit={handleModelSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="model-name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <Input
+                  id="model-name"
+                  value={modelForm.name}
+                  onChange={(e) => setModelForm({ ...modelForm, name: e.target.value })}
+                  placeholder="E.g., Caterpillar 320D"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="model-description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="model-description"
+                  value={modelForm.description}
+                  onChange={(e) => setModelForm({ ...modelForm, description: e.target.value })}
+                  placeholder="Model description"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div className="flex space-x-3">
+                <Button type="submit" variant="primary">
+                  {editingModel ? 'Update' : 'Create'}
+                </Button>
+                {editingModel && (
+                  <Button type="button" variant="secondary" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
+              <h3 className="text-lg font-medium text-gray-900">Existing Models</h3>
+              <Input
+                value={modelQuery}
+                onChange={(e) => setModelQuery(e.target.value)}
+                placeholder="Search model"
+                className="max-w-xs"
+              />
+            </div>
+            <div className="divide-y divide-gray-200 max-h-[32rem] overflow-y-auto">
+              {filteredModels.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  No models registered
+                </div>
+              ) : (
+                filteredModels.map((model) => (
+                  <div key={model.id} className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-900">{model.name}</h4>
+                        {model.description ? <p className="text-gray-600">{model.description}</p> : null}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleEditModel(model)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteModel(model.id)}
                         >
                           Delete
                         </Button>

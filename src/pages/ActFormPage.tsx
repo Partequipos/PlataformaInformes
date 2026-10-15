@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTypes } from '../context/TypesContext';
 import { useAct, useSaveAct } from '../hooks/useActs';
 import { apiService } from '../services/api';
-import { REPORT_MODEL_OPTIONS } from '../constants/reportModels';
+import { resolveModelOptions } from '../constants/reportModels';
 import { compressImageFiles } from '../utils/compressImage';
 import { compressVideoFiles } from '../utils/compressVideo';
 import {
@@ -152,7 +152,7 @@ export const ActFormPage: React.FC = () => {
         : 'entry'
   ) as ActType;
   const isEdit = Boolean(id);
-  const { machineTypes } = useTypes();
+  const { machineTypes, machineModels } = useTypes();
 
   const machineTypeOptions = useMemo(
     () =>
@@ -382,7 +382,7 @@ export const ActFormPage: React.FC = () => {
               required
               value={form.model_type}
               onChange={(e) => setField('model_type', e.target.value)}
-              options={REPORT_MODEL_OPTIONS}
+              options={resolveModelOptions(machineModels, form.model_type)}
               placeholder="Seleccione modelo"
             />
             <Input label="Línea / Serie" value={form.line_series} onChange={(e) => setField('line_series', e.target.value)} />

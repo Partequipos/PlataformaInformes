@@ -746,3 +746,20 @@ export const REPORT_MODEL_OPTIONS: SelectOption[] = [
     { value: 'ZETOR 7245', label: 'ZETOR 7245' },
 ];
 
+/** Prefer the catalog stored in the database. Keep the current value visible even if it was renamed or removed. */
+export function resolveModelOptions(
+  models: Array<{ name: string }>,
+  currentValue?: string
+): SelectOption[] {
+  const fromDatabase = models
+    .map((model) => model.name.trim())
+    .filter(Boolean)
+    .map((name) => ({ value: name, label: name }));
+  const options = fromDatabase.length > 0 ? fromDatabase : REPORT_MODEL_OPTIONS;
+  const current = (currentValue || '').trim();
+  if (current && !options.some((option) => option.value === current)) {
+    return [{ value: current, label: current }, ...options];
+  }
+  return options;
+}
+

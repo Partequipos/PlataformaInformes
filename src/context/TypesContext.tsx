@@ -5,16 +5,21 @@ import { apiService } from '../services/api';
 interface TypesContextType {
   machineTypes: MachineType[];
   componentTypes: ComponentType[];
+  machineModels: MachineType[];
   loading: boolean;
   error: string | null;
   refreshMachineTypes: () => Promise<void>;
   refreshComponentTypes: () => Promise<void>;
+  refreshMachineModels: () => Promise<void>;
   createMachineType: (data: { name: string; description: string }) => Promise<void>;
   createComponentType: (data: { name: string; description: string }) => Promise<void>;
+  createMachineModel: (data: { name: string; description: string }) => Promise<void>;
   updateMachineType: (id: string, data: { name: string; description: string }) => Promise<void>;
   updateComponentType: (id: string, data: { name: string; description: string }) => Promise<void>;
+  updateMachineModel: (id: string, data: { name: string; description: string }) => Promise<void>;
   deleteMachineType: (id: string) => Promise<void>;
   deleteComponentType: (id: string) => Promise<void>;
+  deleteMachineModel: (id: string) => Promise<void>;
 }
 
 const TypesContext = createContext<TypesContextType | undefined>(undefined);
@@ -34,6 +39,7 @@ interface TypesProviderProps {
 export const TypesProvider: React.FC<TypesProviderProps> = ({ children }) => {
   const [machineTypes, setMachineTypes] = useState<MachineType[]>([]);
   const [componentTypes, setComponentTypes] = useState<ComponentType[]>([]);
+  const [machineModels, setMachineModels] = useState<MachineType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,6 +79,23 @@ export const TypesProvider: React.FC<TypesProviderProps> = ({ children }) => {
 
   const refreshComponentTypes = async () => {
     await fetchComponentTypes();
+  };
+
+  const fetchMachineModels = async () => {
+    try {
+      setError(null);
+      const response = await apiService.getMachineModels();
+      if (response.success && response.data) {
+        setMachineModels(response.data);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching models');
+      console.error('Error fetching models:', err);
+    }
+  };
+
+  const refreshMachineModels = async () => {
+    await fetchMachineModels();
   };
 
   const createMachineType = async (data: { name: string; description: string }) => {
@@ -153,11 +176,50 @@ export const TypesProvider: React.FC<TypesProviderProps> = ({ children }) => {
     }
   };
 
+  const createMachineModel = async (data: { name: string; description: string }) => {
+    try {
+      setError(null);
+      const response = await apiService.createMachineModel(data);
+      if (response.success) {
+        await fetchMachineModels();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error creating model');
+      throw err;
+    }
+  };
+
+  const updateMachineModel = async (id: string, data: { name: string; description: string }) => {
+    try {
+      setError(null);
+      const response = await apiService.updateMachineModel(id, data);
+      if (response.success) {
+        await fetchMachineModels();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error updating model');
+      throw err;
+    }
+  };
+
+  const deleteMachineModel = async (id: string) => {
+    try {
+      setError(null);
+      const response = await apiService.deleteMachineModel(id);
+      if (response.success) {
+        await fetchMachineModels();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error deleting model');
+      throw err;
+    }
+  };
+
   useEffect(() => {
     const initializeTypes = async () => {
       setLoading(true);
       try {
-        await Promise.all([fetchMachineTypes(), fetchComponentTypes()]);
+        await Promise.all([fetchMachineTypes(), fetchComponentTypes(), fetchMachineModels()]);
       } catch (err) {
         console.error('Error initializing types:', err);
       } finally {
@@ -171,16 +233,21 @@ export const TypesProvider: React.FC<TypesProviderProps> = ({ children }) => {
   const value: TypesContextType = {
     machineTypes,
     componentTypes,
+    machineModels,
     loading,
     error,
     refreshMachineTypes,
     refreshComponentTypes,
+    refreshMachineModels,
     createMachineType,
     createComponentType,
+    createMachineModel,
     updateMachineType,
     updateComponentType,
+    updateMachineModel,
     deleteMachineType,
     deleteComponentType,
+    deleteMachineModel,
   };
 
   return (

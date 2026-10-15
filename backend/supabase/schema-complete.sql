@@ -122,6 +122,14 @@ CREATE TABLE IF NOT EXISTS component_types (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS machine_models (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS resources (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     model VARCHAR(100) NOT NULL,
@@ -196,6 +204,11 @@ CREATE TRIGGER update_component_types_updated_at
     BEFORE UPDATE ON component_types
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_machine_models_updated_at ON machine_models;
+CREATE TRIGGER update_machine_models_updated_at
+    BEFORE UPDATE ON machine_models
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 DROP TRIGGER IF EXISTS update_resources_updated_at ON resources;
 CREATE TRIGGER update_resources_updated_at
     BEFORE UPDATE ON resources
@@ -216,5 +229,6 @@ ALTER TABLE IF EXISTS public.videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.suggested_parts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.machine_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.component_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.machine_models ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.parameters ENABLE ROW LEVEL SECURITY;
