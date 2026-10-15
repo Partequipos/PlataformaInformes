@@ -6,6 +6,7 @@ import {
   createAct,
   getActs,
   getActById,
+  downloadActPdf,
   updateAct,
   deleteAct,
   deleteActPhoto,
@@ -23,6 +24,7 @@ router.get('/', getActs);
 router.delete('/photos/:photoId', deleteActPhoto);
 router.delete('/videos/:videoId', deleteActVideo);
 router.delete('/attachments/:attachmentId', deleteActAttachment);
+router.get('/:id/pdf', downloadActPdf);
 router.get('/:id', getActById);
 router.post('/', upload.any(), handleUploadError, validateFileUpload, createAct);
 router.put('/:id', upload.any(), handleUploadError, validateFileUpload, updateAct);

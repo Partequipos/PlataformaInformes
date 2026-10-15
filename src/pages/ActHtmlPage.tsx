@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, FileDown } from 'lucide-react';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ import {
   actTitle,
 } from '../constants/equipmentActs';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
+import { downloadActPdf } from '../utils/downloadActPdf';
 
 export const ActHtmlPage: React.FC = () => {
   const { state } = useAuth();
@@ -20,6 +21,8 @@ export const ActHtmlPage: React.FC = () => {
   const { id } = useParams();
   const { data: act, isLoading, error } = useAct(id);
   const [viewer, setViewer] = useState<{ kind: 'photo' | 'video'; url: string; name: string } | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   const htmlTitle = actTitle(act?.act_type);
 
@@ -101,8 +104,31 @@ export const ActHtmlPage: React.FC = () => {
           <Button type="button" size="sm" onClick={downloadHtml}>
             <Download className="mr-1 h-4 w-4" /> Descargar HTML
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            isLoading={isPdfLoading}
+            onClick={async () => {
+              if (!act) return;
+              setPdfError(null);
+              setIsPdfLoading(true);
+              try {
+                const code = act.internal_code || act.pin_serial || act.id.slice(0, 8);
+                await downloadActPdf(act.id, `${htmlTitle}_${code}`);
+              } catch (err) {
+                setPdfError(err instanceof Error ? err.message : 'No se pudo descargar el PDF');
+              } finally {
+                setIsPdfLoading(false);
+              }
+            }}
+          >
+            <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
+          </Button>
         </div>
       </div>
+      {pdfError && (
+        <p className="mx-auto mt-3 max-w-4xl px-4 text-sm text-red-700">{pdfError}</p>
+      )}
 
       <article className="mx-auto my-6 max-w-4xl rounded-xl bg-white p-6 shadow-panel md:p-10">
         <header className="mb-6 flex flex-wrap items-center gap-5 border-b-4 border-brand-red pb-4">

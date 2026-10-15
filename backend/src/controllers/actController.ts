@@ -3,6 +3,7 @@ import pool from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { uploadFileToSupabase, deleteFilesFromSupabase } from '../utils/supabaseStorage';
 import { sanitizeFileName } from '../middleware/fileValidation';
+import { generateActPdf } from '../services/actPdfService';
 
 const INTERNAL_ROLES = new Set(['admin', 'user']);
 
@@ -312,6 +313,36 @@ export const getActById = async (req: AuthRequest, res: Response): Promise<void>
   } catch (error) {
     console.error('getActById error:', error);
     res.status(500).json({ success: false, error: 'Error al obtener el acta' });
+  }
+};
+
+const safeFilePart = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 80);
+
+export const downloadActPdf = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (denyIfViewer(req, res)) return;
+    const act = await loadActBundle(req.params.id);
+    if (!act) {
+      res.status(404).json({ success: false, error: 'Acta no encontrada' });
+      return;
+    }
+    const pdfBuffer = await generateActPdf(act);
+    const title =
+      act.act_type === 'exit' ? 'Acta_Salida' : act.act_type === 'delivery' ? 'Acta_Entrega' : 'Acta_Entrada';
+    const code = safeFilePart(String(act.internal_code || act.pin_serial || act.id).slice(0, 40));
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${title}_${code}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('downloadActPdf error:', error);
+    res.status(500).json({ success: false, error: 'No se pudo generar el PDF del acta' });
   }
 };
 

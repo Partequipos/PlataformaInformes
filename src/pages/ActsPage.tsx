@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ClipboardList, Eye, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { ClipboardList, Eye, Plus, Trash2, AlertCircle, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout } from '../components/templates/DashboardLayout';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
@@ -8,13 +8,16 @@ import { Button } from '../components/atoms/Button';
 import { Select } from '../components/atoms/Select';
 import { useAuth } from '../context/AuthContext';
 import { useActs, useDeleteAct } from '../hooks/useActs';
-import { actTypeLabel } from '../constants/equipmentActs';
+import { actTitle, actTypeLabel } from '../constants/equipmentActs';
+import { downloadActPdf } from '../utils/downloadActPdf';
 
 export const ActsPage: React.FC = () => {
   const { state } = useAuth();
   const role = state.user?.role;
   const [actType, setActType] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [pdfId, setPdfId] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const { data, isLoading, error } = useActs({
     act_type: actType || undefined,
     page: 1,
@@ -74,6 +77,10 @@ export const ActsPage: React.FC = () => {
           </div>
         </div>
 
+        {pdfError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pdfError}</div>
+        )}
+
         <div className="max-w-xs">
           <Select
             label="Filtrar tipo"
@@ -126,6 +133,26 @@ export const ActsPage: React.FC = () => {
                           <Eye className="mr-1 h-3.5 w-3.5" /> HTML
                         </Button>
                       </Link>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        isLoading={pdfId === act.id}
+                        onClick={async () => {
+                          setPdfError(null);
+                          setPdfId(act.id);
+                          try {
+                            const code = act.internal_code || act.pin_serial || act.id.slice(0, 8);
+                            await downloadActPdf(act.id, `${actTitle(act.act_type)}_${code}`);
+                          } catch (err) {
+                            setPdfError(err instanceof Error ? err.message : 'No se pudo descargar el PDF');
+                          } finally {
+                            setPdfId(null);
+                          }
+                        }}
+                      >
+                        <FileDown className="mr-1 h-3.5 w-3.5" /> PDF
+                      </Button>
                       <Link to={`/acts/${act.id}/edit`}>
                         <Button type="button" size="sm" variant="secondary">
                           Editar
