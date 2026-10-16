@@ -261,36 +261,36 @@ export const NewReportPage: React.FC = () => {
   };
 
   const hydrateFormFromReport = (r: any) => {
-    setReportData({
-      clientName: r.client_name || '',
-      clientContact: '',
-      machineType: r.machine_type || '',
-      model: r.model || '',
-      serialNumber: r.serial_number || '',
-      hourmeter: r.hourmeter?.toString() || '',
-      date: r.report_date ? new Date(r.report_date).toISOString().split('T')[0] : '',
-      location: '',
-      ott: r.ott || '',
-      reasonOfService: r.reason_of_service || '',
-      conclusions: r.conclusions || '',
-      overallSuggestions: r.overall_suggestions || '',
-    });
-
-    const loadedComponents = (r.components || []).map((comp: any) => {
-      let params: any[] = [];
-      if (Array.isArray(comp.parameters)) {
-        params = comp.parameters;
-      } else if (typeof comp.parameters === 'string') {
-        try {
-          params = JSON.parse(comp.parameters);
-          if (!Array.isArray(params)) params = [];
-        } catch {
-          params = [];
+      setReportData({
+        clientName: r.client_name || '',
+        clientContact: '',
+        machineType: r.machine_type || '',
+        model: r.model || '',
+        serialNumber: r.serial_number || '',
+        hourmeter: r.hourmeter?.toString() || '',
+        date: r.report_date ? new Date(r.report_date).toISOString().split('T')[0] : '',
+        location: '',
+        ott: r.ott || '',
+        reasonOfService: r.reason_of_service || '',
+        conclusions: r.conclusions || '',
+        overallSuggestions: r.overall_suggestions || '',
+      });
+      
+      const loadedComponents = (r.components || []).map((comp: any) => {
+        let params: any[] = [];
+        if (Array.isArray(comp.parameters)) {
+          params = comp.parameters;
+        } else if (typeof comp.parameters === 'string') {
+          try {
+            params = JSON.parse(comp.parameters);
+            if (!Array.isArray(params)) params = [];
+          } catch {
+            params = [];
+          }
         }
-      }
-
+        
       let photos: Array<{ id: string; url: string; filename: string; photo_name?: string }> = [];
-      if (Array.isArray(comp.photos)) {
+        if (Array.isArray(comp.photos)) {
         photos = comp.photos
           .map((p: any) => {
             if (typeof p === 'string') {
@@ -322,7 +322,7 @@ export const NewReportPage: React.FC = () => {
               };
             }
             if (p.filename) {
-              return {
+            return {
                 id: String(p.id || `file_${p.filename}`),
                 url: `/uploads/${p.filename}`,
                 filename: p.filename,
@@ -334,32 +334,32 @@ export const NewReportPage: React.FC = () => {
           .filter((p: { url: string } | null): p is { id: string; url: string; filename: string; photo_name?: string } =>
             Boolean(p && p.url)
           );
-      }
-
-      return {
-        ...comp,
+        }
+        
+        return {
+          ...comp,
         id: comp.id,
         type: comp.type || '',
         findings: comp.findings || '',
         status: comp.status || 'PENDING',
         suggestions: comp.suggestions || '',
         priority: comp.priority || 'MEDIUM',
-        parameters: params,
-        photos,
+          parameters: params,
+          photos,
         videos: mapStoredMedia(comp.videos, 'video'),
-      };
-    });
-
-    setComponents(loadedComponents);
-    setSuggestedParts(
-      Array.isArray(r.suggested_parts)
-        ? r.suggested_parts.map((p: any) => ({
-            partNumber: p.part_number,
-            description: p.description,
-            quantity: p.quantity,
-          }))
-        : []
-    );
+        };
+      });
+      
+      setComponents(loadedComponents);
+      setSuggestedParts(
+        Array.isArray(r.suggested_parts)
+          ? r.suggested_parts.map((p: any) => ({
+              partNumber: p.part_number,
+              description: p.description,
+              quantity: p.quantity,
+            }))
+          : []
+      );
   };
 
   const mapServerPhotos = (rawPhotos: unknown): ExistingPhoto[] => {
@@ -443,7 +443,7 @@ export const NewReportPage: React.FC = () => {
       })
     );
     hydratedReportIdRef.current = reportId;
-    setInitialized(true);
+      setInitialized(true);
   };
 
   // Reset hydrate guard only when switching to a different report id
@@ -648,25 +648,25 @@ export const NewReportPage: React.FC = () => {
   };
 
   const buildReportPayload = (componentList = components) => ({
-    client_name: reportData.clientName,
-    machine_type: reportData.machineType,
-    model: reportData.model,
-    serial_number: reportData.serialNumber,
+        client_name: reportData.clientName,
+        machine_type: reportData.machineType,
+        model: reportData.model,
+        serial_number: reportData.serialNumber,
     hourmeter: Number(reportData.hourmeter) || 0,
-    report_date: reportData.date,
-    ott: reportData.ott,
-    reason_of_service: reportData.reasonOfService,
-    conclusions: reportData.conclusions,
-    overall_suggestions: reportData.overallSuggestions,
-    status: isEditMode ? (reportResponse?.data?.status || 'draft') : 'draft',
+        report_date: reportData.date,
+        ott: reportData.ott,
+        reason_of_service: reportData.reasonOfService,
+        conclusions: reportData.conclusions,
+        overall_suggestions: reportData.overallSuggestions,
+        status: isEditMode ? (reportResponse?.data?.status || 'draft') : 'draft',
     components: componentList.map((c) => ({
-      id: c.id,
-      type: c.type,
+          id: c.id,
+          type: c.type,
       findings: c.findings || '',
-      parameters: c.parameters,
-      status: c.status,
-      suggestions: c.suggestions,
-      priority: c.priority,
+          parameters: c.parameters,
+          status: c.status,
+          suggestions: c.suggestions,
+          priority: c.priority,
       photos: c.photos
         .map((p) => {
           if (typeof File !== 'undefined' && p instanceof File) return null;
@@ -675,8 +675,8 @@ export const NewReportPage: React.FC = () => {
         .filter((p) => p !== null),
     })),
     suggested_parts: suggestedParts.map((p) => ({
-      part_number: p.partNumber,
-      description: p.description,
+          part_number: p.partNumber,
+          description: p.description,
       quantity: Number(p.quantity) || 1,
     })),
   });
@@ -957,7 +957,7 @@ export const NewReportPage: React.FC = () => {
 
       if (finalize) {
         if (draftStorageKey) localStorage.removeItem(draftStorageKey);
-        navigate('/reports');
+      navigate('/reports');
         return;
       }
 
@@ -972,7 +972,7 @@ export const NewReportPage: React.FC = () => {
       setReportData(localReportSnapshot);
       setComponents(localComponentsSnapshot);
       setSuggestedParts(localPartsSnapshot);
-
+      
       if (error instanceof Error) {
         if (error.message.includes('not authorized') || error.message.includes('not found')) {
           setErrors({ submit: 'You are not authorized to edit this report or the report was not found.' });

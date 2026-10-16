@@ -2,6 +2,15 @@ import { Report, ReportFilters, PaginatedResponse, ApiResponse, User, LoginReque
 import type { EquipmentAct } from '../constants/equipmentActs';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const SESSION_EXPIRED_EVENT = 'auth:session-expired';
+
+const isExpiredSessionError = (status: number, error?: string): boolean =>
+  error === 'Invalid or expired token' || (status === 401 && error === 'Access token required');
+
+export const subscribeSessionExpired = (listener: () => void): (() => void) => {
+  window.addEventListener(SESSION_EXPIRED_EVENT, listener);
+  return () => window.removeEventListener(SESSION_EXPIRED_EVENT, listener);
+};
 
 class ApiService {
   private token: string | null = null;
@@ -44,6 +53,10 @@ class ApiService {
 
     if (!response.ok) {
       console.error('❌ API Error:', data);
+      if (this.token && isExpiredSessionError(response.status, data.error)) {
+        this.clearToken();
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      }
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { User, LoginRequest } from '../types';
-import { apiService } from '../services/api';
+import { apiService, subscribeSessionExpired } from '../services/api';
 
 interface AuthState {
   user: User | null;
@@ -79,23 +79,51 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  useEffect(() => subscribeSessionExpired(() => {
+    dispatch({ type: 'LOGOUT' });
+  }), []);
+
   useEffect(() => {
-    // Check for stored authentication token
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        const user = JSON.parse(userData);
-        apiService.setToken(token);
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-        return;
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        apiService.clearToken();
-      }
+
+    if (!token || !userData) {
+      dispatch({ type: 'AUTH_READY' });
+      return;
     }
-    dispatch({ type: 'AUTH_READY' });
+
+    apiService.setToken(token);
+    let cancelled = false;
+
+    apiService.getProfile()
+      .then((response) => {
+        if (cancelled) return;
+        if (response.success && response.data) {
+          localStorage.setItem('user', JSON.stringify(response.data));
+          dispatch({ type: 'LOGIN_SUCCESS', payload: response.data });
+          return;
+        }
+        apiService.clearToken();
+        dispatch({ type: 'AUTH_READY' });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        if (!apiService.getToken()) {
+          dispatch({ type: 'LOGOUT' });
+          return;
+        }
+        try {
+          const user = JSON.parse(userData) as User;
+          dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+        } catch {
+          apiService.clearToken();
+          dispatch({ type: 'AUTH_READY' });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (username: string, password: string): Promise<void> => {
