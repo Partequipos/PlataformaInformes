@@ -192,7 +192,7 @@ export function buildActHtml(act: EquipmentAct): string {
     ${fieldRow('Número de Motor', act.engine_number)}
     ${fieldRow('Código / Identificación Interna', act.internal_code)}
     ${fieldRow('Año / Mes de Fabricación', act.manufacture_date)}
-    ${fieldRow('Capacidad de Carga', act.load_capacity)}
+    ${fieldRow('Horómetro', act.hourmeter == null || act.hourmeter === '' ? '' : String(act.hourmeter))}
     ${fieldRow('Dispositivo GPS (Rastrack S.A.S.) — Serial', act.gps_serial)}
     ${fieldRow('Fecha Instalación GPS', act.gps_install_date)}
 

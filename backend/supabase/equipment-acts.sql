@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS equipment_acts (
     engine_number VARCHAR(255),
     internal_code VARCHAR(255),
     manufacture_date VARCHAR(50),
-    load_capacity VARCHAR(100),
+    hourmeter NUMERIC,
     gps_serial VARCHAR(255),
     gps_install_date VARCHAR(50),
 

@@ -49,7 +49,7 @@ type FormState = {
   engine_number: string;
   internal_code: string;
   manufacture_date: string;
-  load_capacity: string;
+  hourmeter: string;
   gps_serial: string;
   gps_install_date: string;
   motive: string;
@@ -79,7 +79,7 @@ const emptyForm = (type: ActType): FormState => ({
   engine_number: '',
   internal_code: '',
   manufacture_date: '',
-  load_capacity: '',
+  hourmeter: '',
   gps_serial: '',
   gps_install_date: '',
   motive: '',
@@ -109,7 +109,7 @@ const mapActToForm = (act: EquipmentAct): FormState => ({
   engine_number: act.engine_number || '',
   internal_code: act.internal_code || '',
   manufacture_date: act.manufacture_date || '',
-  load_capacity: act.load_capacity || '',
+  hourmeter: act.hourmeter == null || act.hourmeter === '' ? '' : String(act.hourmeter),
   gps_serial: act.gps_serial || '',
   gps_install_date: act.gps_install_date || '',
   motive: act.motive || '',
@@ -234,8 +234,10 @@ export const ActFormPage: React.FC = () => {
   };
 
   const buildMetaFormData = (): FormData => {
+    const raw = form.hourmeter.trim().replace(',', '.');
+    const hourmeter = raw === '' ? null : Number(raw);
     const fd = new FormData();
-    fd.append('actData', JSON.stringify(form));
+    fd.append('actData', JSON.stringify({ ...form, hourmeter }));
     return fd;
   };
 
@@ -286,6 +288,11 @@ export const ActFormPage: React.FC = () => {
     }
     if (!form.model_type?.trim()) {
       setError('Modelo es requerido');
+      return;
+    }
+    const hourmeterRaw = form.hourmeter.trim().replace(',', '.');
+    if (hourmeterRaw !== '' && (!Number.isFinite(Number(hourmeterRaw)) || Number(hourmeterRaw) < 0)) {
+      setError('Horómetro debe ser un número');
       return;
     }
     setIsSaving(true);
@@ -390,7 +397,16 @@ export const ActFormPage: React.FC = () => {
             <Input label="Número de Motor" value={form.engine_number} onChange={(e) => setField('engine_number', e.target.value)} />
             <Input label="Código / Identificación Interna" value={form.internal_code} onChange={(e) => setField('internal_code', e.target.value)} />
             <Input label="Año / Mes de Fabricación" value={form.manufacture_date} onChange={(e) => setField('manufacture_date', e.target.value)} placeholder="2018-06" />
-            <Input label="Capacidad de Carga" value={form.load_capacity} onChange={(e) => setField('load_capacity', e.target.value)} placeholder="0.99 TON" />
+            <Input
+              label="Horómetro"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
+              value={form.hourmeter}
+              onChange={(e) => setField('hourmeter', e.target.value)}
+              placeholder="0"
+            />
             <Input label="Serial GPS (Rastrack S.A.S.)" value={form.gps_serial} onChange={(e) => setField('gps_serial', e.target.value)} />
             <Input label="Fecha Instalación GPS" value={form.gps_install_date} onChange={(e) => setField('gps_install_date', e.target.value)} placeholder="15 / 12 / 2025" />
           </div>

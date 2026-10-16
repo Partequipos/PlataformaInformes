@@ -154,7 +154,7 @@ export const ActHtmlPage: React.FC = () => {
             ['Número de Motor', act.engine_number],
             ['Código / Identificación Interna', act.internal_code],
             ['Año / Mes de Fabricación', act.manufacture_date],
-            ['Capacidad de Carga', act.load_capacity],
+            ['Horómetro', act.hourmeter == null || act.hourmeter === '' ? '' : String(act.hourmeter)],
             ['Serial GPS', act.gps_serial],
             ['Fecha Instalación GPS', act.gps_install_date],
           ].map(([label, value]) => (

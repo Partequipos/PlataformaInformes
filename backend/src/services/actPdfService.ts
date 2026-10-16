@@ -23,7 +23,7 @@ export type ActPdfInput = {
   engine_number?: string;
   internal_code?: string;
   manufacture_date?: string;
-  load_capacity?: string;
+  hourmeter?: number | string | null;
   gps_serial?: string;
   gps_install_date?: string;
   motive?: string;
@@ -329,7 +329,7 @@ async function buildActHtml(act: ActPdfInput): Promise<string> {
       ${infoItem('Número de Motor', act.engine_number)}
       ${infoItem('Código / Identificación Interna', act.internal_code)}
       ${infoItem('Año / Mes de Fabricación', act.manufacture_date)}
-      ${infoItem('Capacidad de Carga', act.load_capacity)}
+      ${infoItem('Horómetro', act.hourmeter == null || act.hourmeter === '' ? '' : String(act.hourmeter))}
       ${infoItem('Serial GPS', act.gps_serial)}
       ${infoItem('Fecha Instalación GPS', act.gps_install_date)}
     </div>
@@ -394,7 +394,7 @@ function blankDeliveryHtml(logo: string): string {
     'Número de Motor',
     'Código / Identificación Interna',
     'Año / Mes de Fabricación',
-    'Capacidad de Carga',
+    'Horómetro',
     'Serial GPS (Rastrack S.A.S.)',
     'Fecha Instalación GPS',
   ]

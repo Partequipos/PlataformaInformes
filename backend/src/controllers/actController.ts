@@ -20,7 +20,7 @@ type ActPayload = {
   engine_number?: string;
   internal_code?: string;
   manufacture_date?: string;
-  load_capacity?: string;
+  hourmeter?: number | string | null;
   gps_serial?: string;
   gps_install_date?: string;
   motive?: string;
@@ -38,6 +38,19 @@ type ActPayload = {
 };
 
 const ACT_TYPES = new Set(['entry', 'exit', 'delivery']);
+
+function parseHourmeter(value: unknown): { ok: true; value: number | null } | { ok: false } {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true, value: null };
+  }
+  const normalized = typeof value === 'number'
+    ? value
+    : Number(String(value).trim().replace(',', '.'));
+  if (!Number.isFinite(normalized) || normalized < 0) {
+    return { ok: false };
+  }
+  return { ok: true, value: normalized };
+}
 
 function denyIfViewer(req: AuthRequest, res: Response): boolean {
   const role = req.user?.role || '';
@@ -165,7 +178,7 @@ const ACT_COLUMNS = [
   'engine_number',
   'internal_code',
   'manufacture_date',
-  'load_capacity',
+  'hourmeter',
   'gps_serial',
   'gps_install_date',
   'motive',
@@ -195,13 +208,18 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
       res.status(400).json({ success: false, error: 'location es requerido' });
       return;
     }
+    const hourmeter = parseHourmeter(data.hourmeter);
+    if (!hourmeter.ok) {
+      res.status(400).json({ success: false, error: 'Horómetro debe ser numérico' });
+      return;
+    }
 
     await client.query('BEGIN');
     const insert = await client.query(
       `INSERT INTO equipment_acts (
         user_id, act_type, location, act_date, status,
         equipment_type, brand, line_series, model_type, pin_serial, engine_number,
-        internal_code, manufacture_date, load_capacity, gps_serial, gps_install_date,
+        internal_code, manufacture_date, hourmeter, gps_serial, gps_install_date,
         motive, works, mechanical_state, lubrication, operation_test,
         deliverer_name, deliverer_cc, deliverer_signature,
         receiver_name, receiver_cc, receiver_signature, inspection
@@ -223,7 +241,7 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
         data.engine_number || null,
         data.internal_code || null,
         data.manufacture_date || null,
-        data.load_capacity || null,
+        hourmeter.value,
         data.gps_serial || null,
         data.gps_install_date || null,
         data.motive || null,
@@ -375,10 +393,19 @@ export const updateAct = async (req: AuthRequest, res: Response): Promise<void> 
     const values: unknown[] = [];
 
     for (const col of ACT_COLUMNS) {
-      if (data[col] !== undefined) {
-        values.push(data[col]);
-        sets.push(`${col} = $${values.length}`);
+      if (data[col] === undefined) continue;
+      if (col === 'hourmeter') {
+        const hourmeter = parseHourmeter(data.hourmeter);
+        if (!hourmeter.ok) {
+          res.status(400).json({ success: false, error: 'Horómetro debe ser numérico' });
+          return;
+        }
+        values.push(hourmeter.value);
+        sets.push(`hourmeter = $${values.length}`);
+        continue;
       }
+      values.push(data[col]);
+      sets.push(`${col} = $${values.length}`);
     }
 
     if (data.inspection !== undefined) {

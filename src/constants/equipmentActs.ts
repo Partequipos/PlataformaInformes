@@ -217,7 +217,7 @@ export type EquipmentAct = {
   engine_number?: string;
   internal_code?: string;
   manufacture_date?: string;
-  load_capacity?: string;
+  hourmeter?: number | string | null;
   gps_serial?: string;
   gps_install_date?: string;
   motive?: string;
