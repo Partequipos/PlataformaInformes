@@ -41,6 +41,7 @@ type FormState = {
   location: string;
   act_date: string;
   status: 'draft' | 'completed';
+  client_name: string;
   equipment_type: string;
   brand: string;
   line_series: string;
@@ -71,6 +72,7 @@ const emptyForm = (type: ActType): FormState => ({
   location: ACT_LOCATIONS[0],
   act_date: new Date().toISOString().slice(0, 10),
   status: 'draft',
+  client_name: '',
   equipment_type: '',
   brand: '',
   line_series: '',
@@ -101,6 +103,7 @@ const mapActToForm = (act: EquipmentAct): FormState => ({
   location: act.location || ACT_LOCATIONS[0],
   act_date: act.act_date ? String(act.act_date).slice(0, 10) : new Date().toISOString().slice(0, 10),
   status: act.status || 'draft',
+  client_name: act.client_name || '',
   equipment_type: act.equipment_type || '',
   brand: act.brand || '',
   line_series: act.line_series || '',
@@ -344,7 +347,7 @@ export const ActFormPage: React.FC = () => {
 
         <section className={sectionClass}>
           <h2 className={sectionTitle}>Encabezado</h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <Select
               label="Tipo de acta"
               required
@@ -369,6 +372,12 @@ export const ActFormPage: React.FC = () => {
               required
               value={form.act_date}
               onChange={(e) => setField('act_date', e.target.value)}
+            />
+            <Input
+              label="Cliente"
+              value={form.client_name}
+              onChange={(e) => setField('client_name', e.target.value)}
+              placeholder="Nombre de la empresa"
             />
           </div>
         </section>

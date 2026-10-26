@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS equipment_acts (
     location VARCHAR(255) NOT NULL,
     act_date DATE NOT NULL DEFAULT CURRENT_DATE,
     status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'completed')),
+    client_name VARCHAR(255),
 
     -- I. Identificación del equipo
     equipment_type VARCHAR(255),

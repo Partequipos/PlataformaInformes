@@ -1,51 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ClipboardList, Eye, Plus, Trash2, AlertCircle, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout } from '../components/templates/DashboardLayout';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
+import { Input } from '../components/atoms/Input';
 import { Select } from '../components/atoms/Select';
 import { useAuth } from '../context/AuthContext';
 import { useActs, useDeleteAct } from '../hooks/useActs';
 import { actTitle, actTypeLabel } from '../constants/equipmentActs';
 import { downloadActPdf, downloadBlankDeliveryPdf } from '../utils/downloadActPdf';
 
+const formatDay = (value?: string): string => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'dd/MM/yyyy');
+};
+
 export const ActsPage: React.FC = () => {
   const { state } = useAuth();
   const role = state.user?.role;
   const [actType, setActType] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [clientInput, setClientInput] = useState('');
+  const [pin, setPin] = useState('');
+  const [client, setClient] = useState('');
+  const [createdOn, setCreatedOn] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [pdfId, setPdfId] = useState<string | null>(null);
   const [blankLoading, setBlankLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPin(pinInput.trim());
+      setClient(clientInput.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [pinInput, clientInput]);
+
   const { data, isLoading, error } = useActs({
     act_type: actType || undefined,
+    pin: pin || undefined,
+    client: client || undefined,
+    created_on: createdOn || undefined,
     page: 1,
     limit: 50,
   });
+  const hasFilters = Boolean(actType || pin || client || createdOn);
   const deleteMutation = useDeleteAct();
 
   if (role === 'viewer') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <DashboardLayout>
         <div className="flex min-h-96 items-center justify-center">
           <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <DashboardLayout>
-        <div className="flex min-h-96 flex-col items-center justify-center text-center">
-          <AlertCircle className="mb-3 h-10 w-10 text-red-500" />
-          <p className="text-slate-700">No se pudieron cargar las actas.</p>
         </div>
       </DashboardLayout>
     );
@@ -100,7 +114,7 @@ export const ActsPage: React.FC = () => {
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pdfError}</div>
         )}
 
-        <div className="max-w-xs">
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
           <Select
             label="Filtrar tipo"
             value={actType}
@@ -112,7 +126,32 @@ export const ActsPage: React.FC = () => {
               { value: 'delivery', label: 'Entrega' },
             ]}
           />
+          <Input
+            label="PIN"
+            value={pinInput}
+            onChange={(e) => setPinInput(e.target.value)}
+            placeholder="PIN / serie de chasis"
+          />
+          <Input
+            label="Cliente"
+            value={clientInput}
+            onChange={(e) => setClientInput(e.target.value)}
+            placeholder="Nombre de la empresa"
+          />
+          <Input
+            label="Fecha de creación"
+            type="date"
+            value={createdOn}
+            onChange={(e) => setCreatedOn(e.target.value)}
+          />
         </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4" />
+            No se pudieron cargar las actas.
+          </div>
+        )}
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="min-w-full text-sm">
@@ -122,7 +161,9 @@ export const ActsPage: React.FC = () => {
                 <th className="px-4 py-3">Lugar</th>
                 <th className="px-4 py-3">Equipo</th>
                 <th className="px-4 py-3">PIN / Código</th>
+                <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Creada</th>
                 <th className="px-4 py-3">Acciones</th>
               </tr>
             </thead>
@@ -142,9 +183,9 @@ export const ActsPage: React.FC = () => {
                   <td className="px-4 py-3 text-slate-600">
                     {act.pin_serial || act.internal_code || '—'}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {act.act_date ? format(new Date(act.act_date), 'dd/MM/yyyy') : '—'}
-                  </td>
+                  <td className="px-4 py-3 text-slate-600">{act.client_name || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatDay(act.act_date)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatDay(act.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Link to={`/acts/${act.id}/html`} target="_blank" rel="noreferrer">
@@ -202,8 +243,8 @@ export const ActsPage: React.FC = () => {
               ))}
               {(data?.items || []).length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                    No hay actas registradas
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    {hasFilters ? 'No hay actas con esos filtros' : 'No hay actas registradas'}
                   </td>
                 </tr>
               )}

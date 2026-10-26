@@ -696,11 +696,17 @@ class ApiService {
 
   async getActs(params?: {
     act_type?: string;
+    pin?: string;
+    client?: string;
+    created_on?: string;
     page?: number;
     limit?: number;
   }): Promise<ApiResponse<{ items: EquipmentAct[]; total: number; page: number; limit: number }>> {
     const query = new URLSearchParams();
     if (params?.act_type) query.set('act_type', params.act_type);
+    if (params?.pin) query.set('pin', params.pin);
+    if (params?.client) query.set('client', params.client);
+    if (params?.created_on) query.set('created_on', params.created_on);
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
     const suffix = query.toString() ? `?${query.toString()}` : '';

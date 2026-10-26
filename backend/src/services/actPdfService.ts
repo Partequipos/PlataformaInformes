@@ -16,6 +16,7 @@ export type ActPdfInput = {
   act_type: string;
   location?: string;
   act_date?: string;
+  client_name?: string;
   equipment_type?: string;
   line_series?: string;
   model_type?: string;
@@ -316,6 +317,7 @@ async function buildActHtml(act: ActPdfInput): Promise<string> {
   <div class="logo-container"><img class="logo-img" src="${logo}" alt="Logo Partequipos" /></div>
   <div class="header">
     <h1>${escapeHtml(actTitle(act.act_type))}</h1>
+    <p><strong>Cliente:</strong> ${escapeHtml(act.client_name || '—')}</p>
     <p><strong>Lugar:</strong> ${escapeHtml(act.location || '—')}</p>
     <p><strong>Fecha:</strong> ${escapeHtml(dateLabel)}</p>
   </div>
@@ -456,6 +458,7 @@ function blankDeliveryHtml(logo: string): string {
   </div>
   <div class="section">
     <h2>Encabezado</h2>
+    ${writeLine('Cliente')}
     ${writeLine('Lugar')}
     ${writeLine('Fecha')}
   </div>

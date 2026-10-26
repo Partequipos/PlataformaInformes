@@ -1,9 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 
-export function useActs(params?: { act_type?: string; page?: number; limit?: number }) {
+export type ActListParams = {
+  act_type?: string;
+  pin?: string;
+  client?: string;
+  created_on?: string;
+  page?: number;
+  limit?: number;
+};
+
+export function useActs(params?: ActListParams) {
   return useQuery({
     queryKey: ['acts', params],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const res = await apiService.getActs(params);
       if (!res.success || !res.data) throw new Error(res.error || 'Error al cargar actas');

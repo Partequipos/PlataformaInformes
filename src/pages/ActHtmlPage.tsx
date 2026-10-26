@@ -136,6 +136,9 @@ export const ActHtmlPage: React.FC = () => {
           <div>
             <h1 className="font-display text-3xl font-bold text-brand-red">{htmlTitle}</h1>
             <p className="mt-1 text-slate-600">
+              <strong>Cliente:</strong> {act.client_name || '—'}
+            </p>
+            <p className="text-slate-600">
               <strong>Lugar:</strong> {act.location}
             </p>
             <p className="text-slate-600">

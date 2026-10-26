@@ -12,6 +12,7 @@ type ActPayload = {
   location: string;
   act_date?: string;
   status?: 'draft' | 'completed';
+  client_name?: string;
   equipment_type?: string;
   brand?: string;
   line_series?: string;
@@ -170,6 +171,7 @@ const ACT_COLUMNS = [
   'location',
   'act_date',
   'status',
+  'client_name',
   'equipment_type',
   'brand',
   'line_series',
@@ -217,15 +219,15 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
     await client.query('BEGIN');
     const insert = await client.query(
       `INSERT INTO equipment_acts (
-        user_id, act_type, location, act_date, status,
+        user_id, act_type, location, act_date, status, client_name,
         equipment_type, brand, line_series, model_type, pin_serial, engine_number,
         internal_code, manufacture_date, hourmeter, gps_serial, gps_install_date,
         motive, works, mechanical_state, lubrication, operation_test,
         deliverer_name, deliverer_cc, deliverer_signature,
         receiver_name, receiver_cc, receiver_signature, inspection
       ) VALUES (
-        $1,$2,$3,COALESCE($4::date, CURRENT_DATE),COALESCE($5,'draft'),
-        $6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28::jsonb
+        $1,$2,$3,COALESCE($4::date, CURRENT_DATE),COALESCE($5,'draft'),$6,
+        $7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29::jsonb
       ) RETURNING id`,
       [
         req.user?.id,
@@ -233,6 +235,7 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
         data.location.trim(),
         data.act_date || null,
         data.status || 'draft',
+        data.client_name?.trim() || null,
         data.equipment_type || null,
         data.brand || null,
         data.line_series || null,
@@ -274,21 +277,64 @@ export const createAct = async (req: AuthRequest, res: Response): Promise<void> 
   }
 };
 
+function queryText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().slice(0, maxLength);
+  return trimmed || null;
+}
+
+function queryDate(value: unknown): string | null {
+  const text = queryText(value, 10);
+  if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const [year, month, day] = text.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  const valid = parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() === month - 1
+    && parsed.getUTCDate() === day;
+  return valid ? text : null;
+}
+
+function pushIlike(params: unknown[], raw: string): number {
+  const escaped = raw.replace(/[\\%_]/g, (char) => `\\${char}`);
+  params.push(`%${escaped}%`);
+  return params.length;
+}
+
+function buildActListWhere(query: AuthRequest['query']): { where: string; params: unknown[] } {
+  const params: unknown[] = [];
+  let where = 'WHERE 1=1';
+  const actType = queryText(query.act_type, 20);
+  const pin = queryText(query.pin, 120);
+  const client = queryText(query.client, 120);
+  const createdOn = queryDate(query.created_on);
+
+  if (actType && ACT_TYPES.has(actType)) {
+    params.push(actType);
+    where += ` AND act_type = $${params.length}`;
+  }
+  if (pin) {
+    const index = pushIlike(params, pin);
+    where += ` AND COALESCE(pin_serial, '') ILIKE $${index} ESCAPE '\\'`;
+  }
+  if (client) {
+    const index = pushIlike(params, client);
+    where += ` AND COALESCE(client_name, '') ILIKE $${index} ESCAPE '\\'`;
+  }
+  if (createdOn) {
+    params.push(createdOn);
+    where += ` AND ((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'America/Bogota')::date = $${params.length}::date`;
+  }
+  return { where, params };
+}
+
 export const getActs = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (denyIfViewer(req, res)) return;
 
-    const actType = typeof req.query.act_type === 'string' ? req.query.act_type : null;
     const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || '20'), 10) || 20));
     const offset = (page - 1) * limit;
-
-    const params: unknown[] = [];
-    let where = 'WHERE 1=1';
-    if (actType && ACT_TYPES.has(actType)) {
-      params.push(actType);
-      where += ` AND act_type = $${params.length}`;
-    }
+    const { where, params } = buildActListWhere(req.query);
 
     const countResult = await pool.query(
       `SELECT COUNT(*)::int AS total FROM equipment_acts ${where}`,
@@ -297,7 +343,7 @@ export const getActs = async (req: AuthRequest, res: Response): Promise<void> =>
     params.push(limit, offset);
     const listResult = await pool.query(
       `SELECT id, act_type, location, act_date, status, equipment_type, brand, model_type,
-              pin_serial, internal_code, created_at, updated_at, user_id
+              pin_serial, internal_code, client_name, created_at, updated_at, user_id
        FROM equipment_acts ${where}
        ORDER BY created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,

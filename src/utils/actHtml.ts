@@ -179,6 +179,7 @@ export function buildActHtml(act: EquipmentAct): string {
       <img src="${escapeHtml(COMPANY_LOGO_URL)}" alt="Logo Partequipos" />
       <div>
         <h1>${escapeHtml(title)}</h1>
+        <p><strong>Cliente:</strong> ${escapeHtml(act.client_name || '—')}</p>
         <p><strong>Lugar:</strong> ${escapeHtml(act.location || '—')}</p>
         <p><strong>Fecha:</strong> ${escapeHtml(act.act_date || '')}</p>
       </div>

@@ -209,6 +209,7 @@ export type EquipmentAct = {
   location: string;
   act_date: string;
   status: 'draft' | 'completed';
+  client_name?: string;
   equipment_type?: string;
   brand?: string;
   line_series?: string;
