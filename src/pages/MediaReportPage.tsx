@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useReport } from '../hooks/useReports';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
-import { buildMediaReportHtml, MediaReportFile } from '../utils/mediaReportHtml';
+import { buildMediaReportHtml, MediaReportFile, MediaReportParameter, MediaReportPart } from '../utils/mediaReportHtml';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
 
 type MediaItem = { url: string; name: string };
@@ -36,6 +36,56 @@ const collectMedia = (value: unknown): MediaItem[] => {
   return value.map(toMediaUrl).filter((item): item is MediaItem => item !== null);
 };
 
+const cellText = (row: Record<string, unknown>, keys: string[]): string => {
+  for (const key of keys) {
+    const value = row[key];
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value);
+    }
+  }
+  return '';
+};
+
+const parseParameters = (value: unknown): MediaReportParameter[] => {
+  let raw = value;
+  if (typeof value === 'string') {
+    try {
+      raw = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const row = item as Record<string, unknown>;
+    const parameter: MediaReportParameter = {
+      name: cellText(row, ['name']),
+      minValue: cellText(row, ['minValue', 'min_value']),
+      maxValue: cellText(row, ['maxValue', 'max_value']),
+      measuredValue: cellText(row, ['measuredValue', 'measured_value']),
+      corrected: row.corrected === true || row.corrected === 'true' || row.corrected === 'Yes' ? 'Yes' : 'No',
+      observation: cellText(row, ['observation']),
+    };
+    const hasContent = parameter.name || parameter.minValue || parameter.maxValue || parameter.measuredValue || parameter.observation;
+    return hasContent ? [parameter] : [];
+  });
+};
+
+const parseSuggestedParts = (value: unknown): MediaReportPart[] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const row = item as Record<string, unknown>;
+    const part: MediaReportPart = {
+      partNumber: cellText(row, ['part_number', 'partNumber']),
+      description: cellText(row, ['description']),
+      quantity: cellText(row, ['quantity']),
+    };
+    return part.partNumber || part.description ? [part] : [];
+  });
+};
+
 /** Full-screen report (opened in a new tab). PDF download is unchanged. */
 export const MediaReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,10 +107,12 @@ export const MediaReportPage: React.FC = () => {
       reasonOfService: report.reason_of_service || '',
       conclusions: report.conclusions || '',
       overallSuggestions: report.overall_suggestions || '',
+      suggestedParts: parseSuggestedParts(report.suggested_parts),
       sections: components.map((component, index) => ({
         title: `${index + 1}. ${component.type || 'Component'}`,
         findings: component.findings || '',
         suggestions: component.suggestions || '',
+        parameters: parseParameters(component.parameters),
         photos: collectMedia(component.photos),
         videos: collectMedia(component.videos),
       })),
@@ -143,6 +195,35 @@ export const MediaReportPage: React.FC = () => {
             <section key={section.title} className="border border-slate-200 rounded-lg p-4 space-y-3">
               <h2 className="font-display font-semibold text-slate-900">{section.title}</h2>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{section.findings}</p>
+              {section.parameters.length > 0 && (
+                <div className="overflow-x-auto">
+                  <p className="text-sm font-medium text-slate-800 mb-2">Parameters</p>
+                  <table className="min-w-full border border-slate-200 text-xs">
+                    <thead className="bg-slate-50 text-slate-600">
+                      <tr>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Name</th>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Min Value</th>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Max Value</th>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Measured</th>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Corrected</th>
+                        <th className="border border-slate-200 px-2 py-1 text-left">Observation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.parameters.map((parameter, index) => (
+                        <tr key={`${section.title}-${index}`}>
+                          <td className="border border-slate-200 px-2 py-1">{parameter.name}</td>
+                          <td className="border border-slate-200 px-2 py-1">{parameter.minValue}</td>
+                          <td className="border border-slate-200 px-2 py-1">{parameter.maxValue}</td>
+                          <td className="border border-slate-200 px-2 py-1">{parameter.measuredValue}</td>
+                          <td className="border border-slate-200 px-2 py-1">{parameter.corrected}</td>
+                          <td className="border border-slate-200 px-2 py-1 whitespace-pre-wrap">{parameter.observation}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {section.suggestions && (
                 <p className="text-sm text-slate-600 whitespace-pre-wrap">
                   <span className="font-medium text-slate-800">Suggestions: </span>
@@ -187,6 +268,32 @@ export const MediaReportPage: React.FC = () => {
               )}
             </section>
           ))}
+
+          {documentModel.suggestedParts.length > 0 && (
+            <section className="border border-slate-200 rounded-lg p-4">
+              <h2 className="font-display font-semibold text-slate-900 mb-3">Suggested Parts and Activities</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-slate-200 text-sm">
+                  <thead className="bg-slate-50 text-slate-600">
+                    <tr>
+                      <th className="border border-slate-200 px-2 py-1 text-left">Part</th>
+                      <th className="border border-slate-200 px-2 py-1 text-left">Description</th>
+                      <th className="border border-slate-200 px-2 py-1 text-left">Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {documentModel.suggestedParts.map((part, index) => (
+                      <tr key={`${part.partNumber}-${index}`}>
+                        <td className="border border-slate-200 px-2 py-1">{part.partNumber}</td>
+                        <td className="border border-slate-200 px-2 py-1 whitespace-pre-wrap">{part.description}</td>
+                        <td className="border border-slate-200 px-2 py-1">{part.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {documentModel.conclusions && (
             <section>

@@ -1,3 +1,18 @@
+export type MediaReportParameter = {
+  name: string;
+  minValue: string;
+  maxValue: string;
+  measuredValue: string;
+  corrected: string;
+  observation: string;
+};
+
+export type MediaReportPart = {
+  partNumber: string;
+  description: string;
+  quantity: string;
+};
+
 export type MediaReportFile = {
   clientName: string;
   machineType: string;
@@ -9,10 +24,12 @@ export type MediaReportFile = {
   reasonOfService: string;
   conclusions: string;
   overallSuggestions: string;
+  suggestedParts: MediaReportPart[];
   sections: Array<{
     title: string;
     findings: string;
     suggestions: string;
+    parameters: MediaReportParameter[];
     photos: Array<{ url: string; name: string }>;
     videos: Array<{ url: string; name: string }>;
   }>;
@@ -46,6 +63,62 @@ const photoBlock = (items: Array<{ url: string; name: string }>): string => {
     })
     .join('');
   return `<p class="media-label">Fotos / Photos</p><div class="photo-grid">${nodes}</div>`;
+};
+
+const parametersTable = (rows: MediaReportParameter[]): string => {
+  if (rows.length === 0) return '';
+  const body = rows
+    .map(
+      (row) => `<tr>
+        <td>${escapeHtml(row.name)}</td>
+        <td>${escapeHtml(row.minValue)}</td>
+        <td>${escapeHtml(row.maxValue)}</td>
+        <td>${escapeHtml(row.measuredValue)}</td>
+        <td>${escapeHtml(row.corrected)}</td>
+        <td>${escapeHtml(row.observation)}</td>
+      </tr>`
+    )
+    .join('');
+  return `<p class="media-label">Parameters</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Min Value</th>
+          <th>Max Value</th>
+          <th>Measured</th>
+          <th>Corrected</th>
+          <th>Observation</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>`;
+};
+
+const suggestedPartsTable = (rows: MediaReportPart[]): string => {
+  if (rows.length === 0) return '';
+  const body = rows
+    .map(
+      (row) => `<tr>
+        <td>${escapeHtml(row.partNumber)}</td>
+        <td>${escapeHtml(row.description)}</td>
+        <td>${escapeHtml(row.quantity)}</td>
+      </tr>`
+    )
+    .join('');
+  return `<section class="block">
+      <h2>Suggested Parts and Activities</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>Description</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>${body}</tbody>
+      </table>
+    </section>`;
 };
 
 const videoBlock = (items: Array<{ url: string; name: string }>): string => {
@@ -115,6 +188,7 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
       return `<section class="block">
         <h2>${escapeHtml(section.title)}</h2>
         <p class="text">${escapeHtml(section.findings)}</p>
+        ${parametersTable(section.parameters)}
         ${section.suggestions ? `<p class="text muted"><strong>Suggestions: </strong>${escapeHtml(section.suggestions)}</p>` : ''}
         ${photoBlock(section.photos)}
         ${videoBlock(section.videos)}
@@ -146,6 +220,9 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
     .media-card { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid #e2e2e1; border-radius: 8px; background: #fff; cursor: zoom-in; text-align: center; overflow: hidden; }
     .media-card img, .media-card video { width: 100%; height: 140px; object-fit: cover; background: #111; pointer-events: none; }
     .media-name { font-size: 12px; color: #50504f; padding: 0 6px 8px; word-break: break-word; }
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+    .data-table th, .data-table td { border: 1px solid #e2e2e1; padding: 6px; text-align: left; vertical-align: top; }
+    .data-table th { background: #f7f7f7; color: #50504f; }
     #media-viewer { position: fixed; inset: 0; background: rgba(31, 31, 30, 0.72); display: flex; align-items: center; justify-content: center; z-index: 20; }
     #media-viewer[hidden] { display: none; }
     .viewer-panel { width: min(1100px, 92vw); display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -166,6 +243,7 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
       <p class="note">Haga clic en una foto para ampliarla o en un video para verlo a media pantalla, sin salir de este informe.</p>
       ${report.reasonOfService ? `<h2>Reason of service</h2><p class="text">${escapeHtml(report.reasonOfService)}</p>` : ''}
       ${sections}
+      ${suggestedPartsTable(report.suggestedParts)}
       ${report.conclusions ? `<h2>Conclusions</h2><p class="text">${escapeHtml(report.conclusions)}</p>` : ''}
       ${report.overallSuggestions ? `<h2>Overall suggestions</h2><p class="text">${escapeHtml(report.overallSuggestions)}</p>` : ''}
     </div>
