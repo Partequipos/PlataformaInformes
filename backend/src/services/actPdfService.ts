@@ -3,6 +3,7 @@ import puppeteer from 'puppeteer-core';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { formatStoredText } from '../utils/richText';
 
 type ActPhoto = {
   file_path: string;
@@ -181,7 +182,7 @@ const escapeHtml = (value: string): string =>
     .replace(/'/g, '&#39;');
 
 const withBreaks = (value?: string | null): string =>
-  escapeHtml(value || '—').replace(/\n/g, '<br>');
+  value ? formatStoredText(value) : escapeHtml('—');
 
 const actTitle = (type: string): string => {
   if (type === 'exit') return 'Acta de Salida';
@@ -310,6 +311,7 @@ async function buildActHtml(act: ActPdfInput): Promise<string> {
   .sig-box { border: 1px solid #ddd; border-radius: 6px; padding: 12px; min-height: 140px; }
   .signature { max-width: 100%; max-height: 80px; display: block; margin-top: 8px; }
   .sig-line { height: 60px; border-bottom: 1px solid #94a3b8; margin-top: 16px; }
+  ul, ol { margin: 6px 0 6px 20px; }
   .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 16px; }
 </style>
 </head>

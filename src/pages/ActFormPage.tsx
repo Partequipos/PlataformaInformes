@@ -8,6 +8,7 @@ import { Select } from '../components/atoms/Select';
 import { PhotoUpload } from '../components/molecules/PhotoUpload';
 import { VideoUpload } from '../components/molecules/VideoUpload';
 import { SignaturePad } from '../components/molecules/SignaturePad';
+import { RichTextArea } from '../components/molecules/RichTextArea';
 import { useAuth } from '../context/AuthContext';
 import { useTypes } from '../context/TypesContext';
 import { useAct, useSaveAct } from '../hooks/useActs';
@@ -428,22 +429,18 @@ export const ActFormPage: React.FC = () => {
               ? 'II. Motivo de ingreso y trabajos a realizar'
               : 'II. Motivo de salida y trabajos realizados'}
           </h2>
-          <label className="form-label">
-            {form.act_type === 'entry' ? 'Motivo de ingreso' : 'Motivo de salida'}
-          </label>
-          <textarea
-            className="form-input min-h-[90px]"
+          <RichTextArea
+            label={form.act_type === 'entry' ? 'Motivo de ingreso' : 'Motivo de salida'}
             value={form.motive}
-            onChange={(e) => setField('motive', e.target.value)}
+            onChange={(next) => setField('motive', next)}
+            minHeightClassName="min-h-[90px]"
           />
-          <label className="form-label">
-            {form.act_type === 'entry' ? 'Trabajos a realizar' : 'Trabajos efectuados'}
-          </label>
-          <textarea
-            className="form-input min-h-[110px]"
+          <RichTextArea
+            label={form.act_type === 'entry' ? 'Trabajos a realizar' : 'Trabajos efectuados'}
             value={form.works}
-            onChange={(e) => setField('works', e.target.value)}
+            onChange={(next) => setField('works', next)}
             placeholder={'Diagnóstico especializado…\nMantenimiento correctivo…'}
+            minHeightClassName="min-h-[110px]"
           />
         </section>
         )}
@@ -455,12 +452,24 @@ export const ActFormPage: React.FC = () => {
               ? 'III. Estado del equipo y condiciones de entrada'
               : 'III. Estado del equipo y condiciones de salida'}
           </h2>
-          <label className="form-label">1. Estado mecánico y operativo</label>
-          <textarea className="form-input min-h-[80px]" value={form.mechanical_state} onChange={(e) => setField('mechanical_state', e.target.value)} />
-          <label className="form-label">2. Lubricación</label>
-          <textarea className="form-input min-h-[70px]" value={form.lubrication} onChange={(e) => setField('lubrication', e.target.value)} />
-          <label className="form-label">3. Prueba de operación</label>
-          <textarea className="form-input min-h-[80px]" value={form.operation_test} onChange={(e) => setField('operation_test', e.target.value)} />
+          <RichTextArea
+            label="1. Estado mecánico y operativo"
+            value={form.mechanical_state}
+            onChange={(next) => setField('mechanical_state', next)}
+            minHeightClassName="min-h-[80px]"
+          />
+          <RichTextArea
+            label="2. Lubricación"
+            value={form.lubrication}
+            onChange={(next) => setField('lubrication', next)}
+            minHeightClassName="min-h-[70px]"
+          />
+          <RichTextArea
+            label="3. Prueba de operación"
+            value={form.operation_test}
+            onChange={(next) => setField('operation_test', next)}
+            minHeightClassName="min-h-[80px]"
+          />
         </section>
         )}
 
@@ -479,11 +488,11 @@ export const ActFormPage: React.FC = () => {
                   />
                 ))}
               </div>
-              <label className="form-label">Comentarios</label>
-              <textarea
-                className="form-input min-h-[80px]"
+              <RichTextArea
+                label="Comentarios"
                 value={form.inspection[section.id]?.comentarios || ''}
-                onChange={(e) => setInspectionValue(section.id, 'comentarios', e.target.value)}
+                onChange={(next) => setInspectionValue(section.id, 'comentarios', next)}
+                minHeightClassName="min-h-[80px]"
               />
             </section>
           ))}

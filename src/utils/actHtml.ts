@@ -1,5 +1,6 @@
 import { COMPANY_LOGO_URL, DELIVERY_INSPECTION_SECTIONS, INSPECTION_RATING_LABEL, actTitle } from '../constants/equipmentActs';
 import type { EquipmentAct } from '../constants/equipmentActs';
+import { formatStoredText } from './richText';
 
 const escapeHtml = (value: string): string =>
   value
@@ -106,7 +107,9 @@ export function buildActHtml(act: EquipmentAct): string {
             return fieldRow(item.label, INSPECTION_RATING_LABEL[rating] || '—');
           })
           .join('');
-        const comments = escapeHtml(act.inspection?.[section.id]?.comentarios || '—');
+        const comments = act.inspection?.[section.id]?.comentarios
+          ? formatStoredText(act.inspection[section.id].comentarios)
+          : escapeHtml('—');
         return `<h2>${escapeHtml(section.title)}</h2>${rows}<p class="label">Comentarios</p><div class="block">${comments}</div>`;
       }).join('')
     : '';
@@ -115,17 +118,17 @@ export function buildActHtml(act: EquipmentAct): string {
     ? ''
     : `<h2>${escapeHtml(motiveTitle)}</h2>
     <p class="label">${escapeHtml(motiveLabel)}</p>
-    <div class="block">${escapeHtml(act.motive || '—')}</div>
+    <div class="block">${act.motive ? formatStoredText(act.motive) : escapeHtml('—')}</div>
     <p class="label">${escapeHtml(worksLabel)}</p>
-    <div class="block">${escapeHtml(act.works || '—')}</div>
+    <div class="block">${act.works ? formatStoredText(act.works) : escapeHtml('—')}</div>
     <h2>${escapeHtml(stateTitle)}</h2>
     <p class="intro">Por medio de la presente acta se hace constar que el equipo descrito en el encabezado ${escapeHtml(deliveryPhrase)}:</p>
     <p class="label">1. Estado Mecánico y Operativo</p>
-    <div class="block">${escapeHtml(act.mechanical_state || '—')}</div>
+    <div class="block">${act.mechanical_state ? formatStoredText(act.mechanical_state) : escapeHtml('—')}</div>
     <p class="label">2. Lubricación</p>
-    <div class="block">${escapeHtml(act.lubrication || '—')}</div>
+    <div class="block">${act.lubrication ? formatStoredText(act.lubrication) : escapeHtml('—')}</div>
     <p class="label">3. Prueba de Operación</p>
-    <div class="block">${escapeHtml(act.operation_test || '—')}</div>`;
+    <div class="block">${act.operation_test ? formatStoredText(act.operation_test) : escapeHtml('—')}</div>`;
 
   const delivererSig = act.deliverer_signature
     ? `<img class="signature" src="${escapeHtml(absoluteUrl(act.deliverer_signature))}" alt="Firma entrega" />`

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useReport } from '../hooks/useReports';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
+import { RichTextContent } from '../components/atoms/RichTextContent';
 import { buildMediaReportHtml, MediaReportFile, MediaReportParameter, MediaReportPart } from '../utils/mediaReportHtml';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
 
@@ -187,14 +188,14 @@ export const MediaReportPage: React.FC = () => {
           {documentModel.reasonOfService && (
             <section>
               <h2 className="font-display font-semibold text-slate-900">Reason of service</h2>
-              <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap">{documentModel.reasonOfService}</p>
+              <RichTextContent className="text-sm text-slate-700 mt-1" value={documentModel.reasonOfService} />
             </section>
           )}
 
           {documentModel.sections.map((section) => (
             <section key={section.title} className="border border-slate-200 rounded-lg p-4 space-y-3">
               <h2 className="font-display font-semibold text-slate-900">{section.title}</h2>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap">{section.findings}</p>
+              <RichTextContent className="text-sm text-slate-700" value={section.findings} />
               {section.parameters.length > 0 && (
                 <div className="overflow-x-auto">
                   <p className="text-sm font-medium text-slate-800 mb-2">Parameters</p>
@@ -225,10 +226,10 @@ export const MediaReportPage: React.FC = () => {
                 </div>
               )}
               {section.suggestions && (
-                <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                <div className="text-sm text-slate-600">
                   <span className="font-medium text-slate-800">Suggestions: </span>
-                  {section.suggestions}
-                </p>
+                  <RichTextContent className="inline" value={section.suggestions} />
+                </div>
               )}
               {section.photos.length > 0 && (
                 <div>
@@ -298,13 +299,13 @@ export const MediaReportPage: React.FC = () => {
           {documentModel.conclusions && (
             <section>
               <h2 className="font-display font-semibold text-slate-900">Conclusions</h2>
-              <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap">{documentModel.conclusions}</p>
+              <RichTextContent className="text-sm text-slate-700 mt-1" value={documentModel.conclusions} />
             </section>
           )}
           {documentModel.overallSuggestions && (
             <section>
               <h2 className="font-display font-semibold text-slate-900">Overall suggestions</h2>
-              <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap">{documentModel.overallSuggestions}</p>
+              <RichTextContent className="text-sm text-slate-700 mt-1" value={documentModel.overallSuggestions} />
             </section>
           )}
         </div>

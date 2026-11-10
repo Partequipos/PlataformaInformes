@@ -4,15 +4,11 @@ import { Report, Component, Photo, SuggestedPart } from '../types';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { formatStoredText } from '../utils/richText';
 
 export class PDFService {
-  // Función helper para procesar texto y preservar saltos de línea
   private static processTextWithLineBreaks(text: string): string {
-    if (!text) return '';
-    // Convertir saltos de línea en elementos <br> y preservar espacios múltiples
-    return text
-      .replace(/\n/g, '<br>')
-      .replace(/\s{2,}/g, (match) => '&nbsp;'.repeat(match.length));
+    return formatStoredText(text);
   }
 
   private static async getLogoBase64(): Promise<string> {
@@ -314,6 +310,7 @@ export class PDFService {
           .status-archived { background-color: #e5e7eb; color: #374151; }
           .photos-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
           .photo-item { max-width: 200px; max-height: 200px; margin: 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+          ul, ol { margin: 6px 0 6px 20px; }
           .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
         </style>
       </head>
@@ -439,6 +436,7 @@ export class PDFService {
           .status-archived { background-color: #e5e7eb; color: #374151; }
           .photos-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
           .photo-item { max-width: 200px; max-height: 150px; margin: 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+          ul, ol { margin: 6px 0 6px 20px; }
           .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
         </style>
       </head>

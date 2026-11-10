@@ -7,6 +7,7 @@ import { StatusBadge } from '../components/molecules/StatusBadge';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { ReportActions } from '../components/molecules/ReportActions';
 import { Button } from '../components/atoms/Button';
+import { RichTextContent } from '../components/atoms/RichTextContent';
 import { 
   ArrowLeft, 
   Edit, 
@@ -330,7 +331,7 @@ export const ReportViewPage: React.FC = () => {
                   <div className="mt-6">
                     <h3 className="text-sm font-medium text-slate-600 mb-2">Reason of Service</h3>
                     <div className="bg-slate-50 rounded-lg p-4">
-                      <p className="text-slate-900 whitespace-pre-wrap">{report.reason_of_service}</p>
+                      <RichTextContent className="text-slate-900" value={report.reason_of_service} />
                     </div>
                   </div>
                 )}
@@ -365,7 +366,7 @@ export const ReportViewPage: React.FC = () => {
                       <div className="space-y-4">
                         <div>
                           <h4 className="text-sm font-medium text-slate-900 mb-2">Findings</h4>
-                          <p className="text-slate-700">{component.findings}</p>
+                          <RichTextContent className="text-slate-700" value={component.findings} />
                         </div>
 
                         <div>
@@ -419,7 +420,7 @@ export const ReportViewPage: React.FC = () => {
 
                         <div>
                           <h4 className="text-sm font-medium text-slate-900 mb-2">Suggestions</h4>
-                          <p className="text-slate-700">{component.suggestions}</p>
+                          <RichTextContent className="text-slate-700" value={component.suggestions} />
                         </div>
 
                         {component.photos && component.photos.length > 0 && (
@@ -452,7 +453,7 @@ export const ReportViewPage: React.FC = () => {
               {/* Conclusions */}
               <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h2 className="text-xl font-semibold text-slate-900 mb-4">Conclusions</h2>
-                <p className="text-slate-700 leading-relaxed">{report.conclusions}</p>
+                <RichTextContent className="text-slate-700 leading-relaxed" value={report.conclusions} />
               </div>
             </div>
 

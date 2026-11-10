@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { Download, ArrowLeft, FileDown } from 'lucide-react';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
+import { RichTextContent } from '../components/atoms/RichTextContent';
 import { useAuth } from '../context/AuthContext';
 import { useAct } from '../hooks/useActs';
 import { buildActHtml } from '../utils/actHtml';
@@ -171,8 +172,8 @@ export const ActHtmlPage: React.FC = () => {
         {!isDelivery && (
         <section className="mb-8 space-y-3">
           <h2 className="font-display text-lg font-bold text-brand-red">{motiveTitle}</h2>
-          <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm text-slate-800">{act.motive || '—'}</div>
-          <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm text-slate-800">{act.works || '—'}</div>
+          <RichTextContent className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800" value={act.motive} />
+          <RichTextContent className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800" value={act.works} />
         </section>
         )}
 
@@ -183,9 +184,9 @@ export const ActHtmlPage: React.FC = () => {
             Por medio de la presente acta se hace constar que el equipo descrito en el encabezado se{' '}
             {act.act_type === 'entry' ? 'recibe en taller' : 'entrega al operador'} bajo las siguientes condiciones:
           </p>
-          <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.mechanical_state}</div>
-          <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.lubrication}</div>
-          <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">{act.operation_test}</div>
+          <RichTextContent className="rounded-lg bg-slate-50 p-3 text-sm" value={act.mechanical_state} />
+          <RichTextContent className="rounded-lg bg-slate-50 p-3 text-sm" value={act.lubrication} />
+          <RichTextContent className="rounded-lg bg-slate-50 p-3 text-sm" value={act.operation_test} />
         </section>
         )}
 
@@ -202,9 +203,9 @@ export const ActHtmlPage: React.FC = () => {
                   </div>
                 );
               })}
-              <div className="rounded-lg bg-slate-50 p-3 whitespace-pre-wrap text-sm">
+              <div className="rounded-lg bg-slate-50 p-3 text-sm">
                 <span className="font-semibold text-slate-500">Comentarios: </span>
-                {act.inspection?.[section.id]?.comentarios || '—'}
+                <RichTextContent className="inline" value={act.inspection?.[section.id]?.comentarios} />
               </div>
             </section>
           ))}

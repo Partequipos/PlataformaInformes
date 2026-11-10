@@ -9,10 +9,11 @@ import { DashboardLayout } from '../components/templates/DashboardLayout';
 import { Button } from '../components/atoms/Button';
 import { Input } from '../components/atoms/Input';
 import { Select } from '../components/atoms/Select';
-import { Textarea } from '../components/atoms/Textarea';
+import { RichTextArea } from '../components/molecules/RichTextArea';
 import { PhotoUpload } from '../components/molecules/PhotoUpload';
 import { VideoUpload } from '../components/molecules/VideoUpload';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
+import { isRichTextEmpty } from '../utils/richText';
 import { 
   Save, 
   Plus, 
@@ -477,14 +478,14 @@ export const NewReportPage: React.FC = () => {
       newErrors.hourmeter = 'Hourmeter must be a valid number';
     }
     if (!reportData.ott) newErrors.ott = 'OTT is required';
-    if (!reportData.reasonOfService) newErrors.reasonOfService = 'Reason of service is required';
+    if (isRichTextEmpty(reportData.reasonOfService)) newErrors.reasonOfService = 'Reason of service is required';
 
     // Step 2 validation
     if (components.length === 0) {
       newErrors.components = 'At least one component assessment is required';
     } else {
       components.forEach((comp, index) => {
-        if (!comp.findings) {
+        if (isRichTextEmpty(comp.findings)) {
           newErrors[`component_${index}_findings`] = `Findings are required for component ${index + 1}`;
         }
       });
@@ -501,7 +502,7 @@ export const NewReportPage: React.FC = () => {
     }
 
     // Step 3 validation
-    if (!reportData.conclusions) newErrors.conclusions = 'Conclusions are required';
+    if (isRichTextEmpty(reportData.conclusions)) newErrors.conclusions = 'Conclusions are required';
     
     // Step 4 (suggested parts) validation
     suggestedParts.forEach((part, index) => {
@@ -531,13 +532,13 @@ export const NewReportPage: React.FC = () => {
         newErrors.hourmeter = 'Hourmeter must be a valid number';
       }
       if (!reportData.ott) newErrors.ott = 'OTT is required';
-      if (!reportData.reasonOfService) newErrors.reasonOfService = 'Reason of service is required';
+      if (isRichTextEmpty(reportData.reasonOfService)) newErrors.reasonOfService = 'Reason of service is required';
     } else if (step === 2) {
       if (components.length === 0) {
         newErrors.components = 'At least one component assessment is required';
       }
     } else if (step === 3) {
-      if (!reportData.conclusions) newErrors.conclusions = 'Conclusions are required';
+      if (isRichTextEmpty(reportData.conclusions)) newErrors.conclusions = 'Conclusions are required';
     }
 
     setErrors(newErrors);
@@ -830,10 +831,10 @@ export const NewReportPage: React.FC = () => {
           !reportData.serialNumber ||
           !reportData.hourmeter ||
           !reportData.ott ||
-          !reportData.reasonOfService
+          isRichTextEmpty(reportData.reasonOfService)
         ) {
           setCurrentStep(1);
-        } else if (components.length === 0 || components.some((c) => !c.findings)) {
+        } else if (components.length === 0 || components.some((c) => isRichTextEmpty(c.findings))) {
           setCurrentStep(2);
         } else {
           setCurrentStep(3);
@@ -1115,13 +1116,12 @@ export const NewReportPage: React.FC = () => {
           </div>
           
           <div className="space-y-2 min-h-[80px] border border-gray-200 p-2 rounded">
-            <Textarea
+            <RichTextArea
               label="Reason of Service"
               value={reportData.reasonOfService}
-              onChange={(e) => setReportData(prev => ({ ...prev, reasonOfService: e.target.value }))}
+              onChange={(next) => setReportData((prev) => ({ ...prev, reasonOfService: next }))}
               error={errors.reasonOfService}
               placeholder="Enter the reason for the service"
-              rows={4}
               required
             />
           </div>
@@ -1188,10 +1188,10 @@ export const NewReportPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <Textarea
+              <RichTextArea
                 label="Findings"
                 value={component.findings}
-                onChange={(e) => updateComponent(index, 'findings', e.target.value)}
+                onChange={(next) => updateComponent(index, 'findings', next)}
                 error={errors[`component_${index}_findings`]}
                 placeholder="Describe the findings for this component"
                 required
@@ -1281,10 +1281,10 @@ export const NewReportPage: React.FC = () => {
                 </div>
               </div>
 
-              <Textarea
+              <RichTextArea
                 label="Suggestions"
                 value={component.suggestions || ''}
-                onChange={(e) => updateComponent(index, 'suggestions', e.target.value)}
+                onChange={(next) => updateComponent(index, 'suggestions', next)}
                 placeholder="Provide suggestions for this component"
               />
 
@@ -1341,19 +1341,19 @@ export const NewReportPage: React.FC = () => {
 
       <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
         <div className="space-y-6">
-          <Textarea
+          <RichTextArea
             label="Conclusions"
             value={reportData.conclusions}
-            onChange={(e) => setReportData(prev => ({ ...prev, conclusions: e.target.value }))}
+            onChange={(next) => setReportData((prev) => ({ ...prev, conclusions: next }))}
             error={errors.conclusions}
             placeholder="Provide overall conclusions about the machinery inspection"
             required
           />
 
-          <Textarea
+          <RichTextArea
             label="Overall Suggestions"
             value={reportData.overallSuggestions}
-            onChange={(e) => setReportData(prev => ({ ...prev, overallSuggestions: e.target.value }))}
+            onChange={(next) => setReportData((prev) => ({ ...prev, overallSuggestions: next }))}
             placeholder="Provide overall suggestions for the machinery"
           />
         </div>

@@ -125,11 +125,14 @@ export const ReportsPage: React.FC = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <Input
               placeholder="Search client name..."
               value={pendingClientName}
               onChange={(e) => setPendingClientName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch();
+              }}
             />
             <Select
               options={machineTypeOptions}
@@ -143,10 +146,6 @@ export const ReportsPage: React.FC = () => {
               onChange={(e) => handleFilterChange('status', e.target.value as ReportStatus)}
               placeholder="Select status"
             />
-            <Button variant="outline" onClick={handleSearch} className="ml-2">Buscar</Button>
-            <Button variant="outline" onClick={clearFilters}>
-              Clear Filters
-            </Button>
             <Select
               options={[
                 { value: '10', label: '10 per page' },
@@ -161,6 +160,14 @@ export const ReportsPage: React.FC = () => {
               }}
               placeholder="Page size"
             />
+          </div>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <Button type="button" variant="primary" onClick={handleSearch}>
+              Buscar
+            </Button>
+            <Button type="button" variant="outline" onClick={clearFilters}>
+              Clear Filters
+            </Button>
           </div>
 
           {/* Reports Grid */}

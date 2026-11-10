@@ -1,3 +1,5 @@
+import { formatStoredText } from './richText';
+
 export type MediaReportParameter = {
   name: string;
   minValue: string;
@@ -187,9 +189,9 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
     .map((section) => {
       return `<section class="block">
         <h2>${escapeHtml(section.title)}</h2>
-        <p class="text">${escapeHtml(section.findings)}</p>
+        <div class="text">${formatStoredText(section.findings)}</div>
         ${parametersTable(section.parameters)}
-        ${section.suggestions ? `<p class="text muted"><strong>Suggestions: </strong>${escapeHtml(section.suggestions)}</p>` : ''}
+        ${section.suggestions ? `<div class="text muted"><strong>Suggestions: </strong>${formatStoredText(section.suggestions)}</div>` : ''}
         ${photoBlock(section.photos)}
         ${videoBlock(section.videos)}
       </section>`;
@@ -211,7 +213,8 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
     h1 { margin: 8px 0 4px; font-size: 28px; }
     .meta, .note { color: #50504f; }
     .block { border: 1px solid #e2e2e1; border-radius: 10px; padding: 16px; margin-top: 16px; }
-    .text { white-space: pre-wrap; }
+    .text { white-space: normal; }
+    .text ul, .text ol { margin: 0.4em 0 0.4em 1.2em; }
     .muted { color: #50504f; }
     .media-label { font-weight: 600; margin: 12px 0 8px; }
     .photo-grid, .video-grid { display: grid; gap: 12px; }
@@ -241,11 +244,11 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
       <p class="meta">${escapeHtml(report.machineType)} · ${escapeHtml(report.model)} · S/N ${escapeHtml(report.serialNumber)}</p>
       <p class="meta">OTT ${escapeHtml(report.ott)} · Horómetro ${escapeHtml(report.hourmeter)} · ${escapeHtml(report.reportDate)}</p>
       <p class="note">Haga clic en una foto para ampliarla o en un video para verlo a media pantalla, sin salir de este informe.</p>
-      ${report.reasonOfService ? `<h2>Reason of service</h2><p class="text">${escapeHtml(report.reasonOfService)}</p>` : ''}
+      ${report.reasonOfService ? `<h2>Reason of service</h2><div class="text">${formatStoredText(report.reasonOfService)}</div>` : ''}
       ${sections}
       ${suggestedPartsTable(report.suggestedParts)}
-      ${report.conclusions ? `<h2>Conclusions</h2><p class="text">${escapeHtml(report.conclusions)}</p>` : ''}
-      ${report.overallSuggestions ? `<h2>Overall suggestions</h2><p class="text">${escapeHtml(report.overallSuggestions)}</p>` : ''}
+      ${report.conclusions ? `<h2>Conclusions</h2><div class="text">${formatStoredText(report.conclusions)}</div>` : ''}
+      ${report.overallSuggestions ? `<h2>Overall suggestions</h2><div class="text">${formatStoredText(report.overallSuggestions)}</div>` : ''}
     </div>
   </main>
   <div id="media-viewer" hidden>
