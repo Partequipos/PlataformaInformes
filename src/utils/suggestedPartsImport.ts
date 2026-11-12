@@ -150,11 +150,21 @@ const parseCsv = (text: string): unknown[][] => {
   });
 };
 
-export const SUGGESTED_PARTS_TEMPLATE_CSV = `part_number,description,quantity
-FILTRO-001,Cambio de filtro de aceite,2
-ACT-MTTO,Mantenimiento preventivo 500h,1
-SELLO-045,Sello hidráulico brazo,4
-`;
+const TEMPLATE_ROWS: Array<Array<string | number>> = [
+  ['part_number', 'description', 'quantity'],
+  ['FILTRO-001', 'Cambio de filtro de aceite', 2],
+  ['ACT-MTTO', 'Mantenimiento preventivo 500h', 1],
+  ['SELLO-045', 'Sello hidráulico brazo', 4],
+];
+
+export async function downloadSuggestedPartsTemplate(): Promise<void> {
+  const XLSX = await import('xlsx');
+  const worksheet = XLSX.utils.aoa_to_sheet(TEMPLATE_ROWS);
+  worksheet['!cols'] = [{ wch: 16 }, { wch: 36 }, { wch: 10 }];
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Suggested Parts');
+  XLSX.writeFile(workbook, 'suggested_parts_template.xlsx');
+}
 
 export async function parseSuggestedPartsFile(file: File): Promise<SuggestedPartsImportResult> {
   const name = file.name.toLowerCase();

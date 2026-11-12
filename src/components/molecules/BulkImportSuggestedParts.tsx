@@ -2,8 +2,8 @@ import React, { useRef, useState } from 'react';
 import { AlertCircle, CheckCircle, Download, Upload, X } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import {
+  downloadSuggestedPartsTemplate,
   parseSuggestedPartsFile,
-  SUGGESTED_PARTS_TEMPLATE_CSV,
   type SuggestedPartRow,
 } from '../../utils/suggestedPartsImport';
 
@@ -14,6 +14,7 @@ type BulkImportSuggestedPartsProps = {
 export const BulkImportSuggestedParts: React.FC<BulkImportSuggestedPartsProps> = ({ onImport }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
 
@@ -23,18 +24,20 @@ export const BulkImportSuggestedParts: React.FC<BulkImportSuggestedPartsProps> =
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const downloadTemplate = () => {
-    const blob = new Blob([SUGGESTED_PARTS_TEMPLATE_CSV], {
-      type: 'text/csv;charset=utf-8',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'suggested_parts_template.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  const downloadTemplate = async () => {
+    setIsDownloading(true);
+    setError(null);
+    try {
+      await downloadSuggestedPartsTemplate();
+    } catch (downloadError) {
+      setError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : 'No se pudo descargar la plantilla Excel'
+      );
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,9 +80,15 @@ export const BulkImportSuggestedParts: React.FC<BulkImportSuggestedPartsProps> =
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            isLoading={isDownloading}
+            onClick={downloadTemplate}
+          >
             <Download className="mr-1 h-4 w-4" />
-            Plantilla
+            Plantilla Excel
           </Button>
           <Button
             type="button"
