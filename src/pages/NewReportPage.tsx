@@ -10,10 +10,12 @@ import { Button } from '../components/atoms/Button';
 import { Input } from '../components/atoms/Input';
 import { Select } from '../components/atoms/Select';
 import { RichTextArea } from '../components/molecules/RichTextArea';
+import { BulkImportSuggestedParts } from '../components/molecules/BulkImportSuggestedParts';
 import { PhotoUpload } from '../components/molecules/PhotoUpload';
 import { VideoUpload } from '../components/molecules/VideoUpload';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { isRichTextEmpty } from '../utils/richText';
+import type { SuggestedPartRow } from '../utils/suggestedPartsImport';
 import { 
   Save, 
   Plus, 
@@ -585,6 +587,10 @@ export const NewReportPage: React.FC = () => {
       description: '',
       quantity: 1,
     }]);
+  };
+
+  const importPartsFromFile = (parts: SuggestedPartRow[]) => {
+    setSuggestedParts((prev) => [...prev, ...parts]);
   };
 
   const updatePart = (index: number, field: keyof typeof suggestedParts[0], value: any) => {
@@ -1362,10 +1368,14 @@ export const NewReportPage: React.FC = () => {
       <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-slate-900">Suggested Parts and Activities</h3>
-          <Button onClick={addPart} variant="outline" size="sm">
+          <Button type="button" onClick={addPart} variant="outline" size="sm">
             <Plus className="w-4 h-4 mr-2" />
             Add Part
           </Button>
+        </div>
+
+        <div className="mb-4">
+          <BulkImportSuggestedParts onImport={importPartsFromFile} />
         </div>
 
         <div className="space-y-4">
