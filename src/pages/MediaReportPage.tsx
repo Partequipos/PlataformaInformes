@@ -4,6 +4,7 @@ import { useReport } from '../hooks/useReports';
 import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
 import { RichTextContent } from '../components/atoms/RichTextContent';
+import { COMPANY_LOGO_URL } from '../constants/equipmentActs';
 import { buildMediaReportHtml, MediaReportFile, MediaReportParameter, MediaReportPart } from '../utils/mediaReportHtml';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
 
@@ -157,19 +158,26 @@ export const MediaReportPage: React.FC = () => {
         <div className="h-1.5 bg-brand-red" />
         <div className="p-6 md:p-8 space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-red">
-                Informe con videos
-              </p>
-              <h1 className="text-2xl font-display font-bold text-slate-900 mt-1">
-                {documentModel.clientName}
-              </h1>
-              <p className="text-sm text-slate-600 mt-1">
-                {documentModel.machineType} · {documentModel.model} · S/N {documentModel.serialNumber}
-              </p>
-              <p className="text-sm text-slate-600">
-                OTT {documentModel.ott} · Horómetro {documentModel.hourmeter} · {documentModel.reportDate}
-              </p>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-4">
+              <img
+                src={COMPANY_LOGO_URL}
+                alt="Logo Partequipos"
+                className="h-16 w-auto max-w-[180px] object-contain"
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-red">
+                  Informe con videos
+                </p>
+                <h1 className="text-2xl font-display font-bold text-slate-900 mt-1">
+                  {documentModel.clientName}
+                </h1>
+                <p className="text-sm text-slate-600 mt-1">
+                  {documentModel.machineType} · {documentModel.model} · S/N {documentModel.serialNumber}
+                </p>
+                <p className="text-sm text-slate-600">
+                  OTT {documentModel.ott} · Horómetro {documentModel.hourmeter} · {documentModel.reportDate}
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={downloadHtml}>

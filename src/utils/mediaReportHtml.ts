@@ -1,3 +1,4 @@
+import { COMPANY_LOGO_URL } from '../constants/equipmentActs';
 import { formatStoredText } from './richText';
 
 export type MediaReportParameter = {
@@ -209,6 +210,9 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
     main { width: calc(100% - 32px); margin: 16px; background: #fff; border: 1px solid #e2e2e1; border-radius: 12px; overflow: hidden; }
     .pad { padding: 28px; }
     .bar { height: 6px; background: #cf1b22; }
+    .header { display: flex; gap: 18px; align-items: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid #e2e2e1; }
+    .logo { width: 140px; max-width: 34%; height: auto; object-fit: contain; display: block; }
+    .header-copy { min-width: 0; flex: 1; }
     .kicker { margin: 0; color: #cf1b22; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
     h1 { margin: 8px 0 4px; font-size: 28px; }
     .meta, .note { color: #50504f; }
@@ -239,10 +243,15 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
   <main>
     <div class="bar"></div>
     <div class="pad">
-      <p class="kicker">Informe con videos</p>
-      <h1>${escapeHtml(report.clientName)}</h1>
-      <p class="meta">${escapeHtml(report.machineType)} · ${escapeHtml(report.model)} · S/N ${escapeHtml(report.serialNumber)}</p>
-      <p class="meta">OTT ${escapeHtml(report.ott)} · Horómetro ${escapeHtml(report.hourmeter)} · ${escapeHtml(report.reportDate)}</p>
+      <header class="header">
+        <img class="logo" src="${escapeHtml(COMPANY_LOGO_URL)}" alt="Logo Partequipos" />
+        <div class="header-copy">
+          <p class="kicker">Informe con videos</p>
+          <h1>${escapeHtml(report.clientName)}</h1>
+          <p class="meta">${escapeHtml(report.machineType)} · ${escapeHtml(report.model)} · S/N ${escapeHtml(report.serialNumber)}</p>
+          <p class="meta">OTT ${escapeHtml(report.ott)} · Horómetro ${escapeHtml(report.hourmeter)} · ${escapeHtml(report.reportDate)}</p>
+        </div>
+      </header>
       <p class="note">Haga clic en una foto para ampliarla o en un video para verlo a media pantalla, sin salir de este informe.</p>
       ${report.reasonOfService ? `<h2>Reason of service</h2><div class="text">${formatStoredText(report.reasonOfService)}</div>` : ''}
       ${sections}
