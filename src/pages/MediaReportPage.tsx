@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../components/molecules/LoadingSpinner';
 import { Button } from '../components/atoms/Button';
 import { RichTextContent } from '../components/atoms/RichTextContent';
 import { COMPANY_LOGO_URL } from '../constants/equipmentActs';
+import { useAuth } from '../context/AuthContext';
 import { buildMediaReportHtml, MediaReportFile, MediaReportParameter, MediaReportPart } from '../utils/mediaReportHtml';
 import { sanitizeFilename } from '../utils/filenameSanitizer';
 
@@ -91,9 +92,11 @@ const parseSuggestedParts = (value: unknown): MediaReportPart[] => {
 /** Full-screen report (opened in a new tab). PDF download is unchanged. */
 export const MediaReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { state: authState } = useAuth();
   const { data, isLoading, error } = useReport(id || '');
   const report = data?.data;
   const [viewer, setViewer] = useState<{ kind: 'photo' | 'video'; url: string; name: string } | null>(null);
+  const includeLogo = String(authState.user?.role || '').toLowerCase().trim() !== 'viewer';
 
   const documentModel = useMemo<MediaReportFile | null>(() => {
     if (!report) return null;
@@ -123,7 +126,7 @@ export const MediaReportPage: React.FC = () => {
 
   const downloadHtml = () => {
     if (!documentModel) return;
-    const html = buildMediaReportHtml(documentModel);
+    const html = buildMediaReportHtml(documentModel, { includeLogo });
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -159,11 +162,13 @@ export const MediaReportPage: React.FC = () => {
         <div className="p-6 md:p-8 space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-4">
-              <img
-                src={COMPANY_LOGO_URL}
-                alt="Logo Partequipos"
-                className="h-16 w-auto max-w-[180px] object-contain"
-              />
+              {includeLogo ? (
+                <img
+                  src={COMPANY_LOGO_URL}
+                  alt="Logo Partequipos"
+                  className="h-16 w-auto max-w-[180px] object-contain"
+                />
+              ) : null}
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-red">
                   Informe con videos

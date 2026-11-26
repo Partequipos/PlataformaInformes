@@ -184,8 +184,16 @@ document.addEventListener('keydown', function (event) {
 });
 `;
 
+type BuildMediaReportHtmlOptions = {
+  includeLogo?: boolean;
+};
+
 /** Standalone HTML the user can email. Videos play from their public Supabase URL. */
-export const buildMediaReportHtml = (report: MediaReportFile): string => {
+export const buildMediaReportHtml = (
+  report: MediaReportFile,
+  options: BuildMediaReportHtmlOptions = {}
+): string => {
+  const includeLogo = options.includeLogo !== false;
   const sections = report.sections
     .map((section) => {
       return `<section class="block">
@@ -198,6 +206,10 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
       </section>`;
     })
     .join('');
+
+  const logoHtml = includeLogo
+    ? `<img class="logo" src="${escapeHtml(COMPANY_LOGO_URL)}" alt="Logo Partequipos" />`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -244,7 +256,7 @@ export const buildMediaReportHtml = (report: MediaReportFile): string => {
     <div class="bar"></div>
     <div class="pad">
       <header class="header">
-        <img class="logo" src="${escapeHtml(COMPANY_LOGO_URL)}" alt="Logo Partequipos" />
+        ${logoHtml}
         <div class="header-copy">
           <p class="kicker">Informe con videos</p>
           <h1>${escapeHtml(report.clientName)}</h1>

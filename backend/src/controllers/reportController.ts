@@ -869,9 +869,10 @@ export const downloadPDF = async (req: Request, res: Response): Promise<void> =>
     // Flatten photos array
     const allPhotos = components.flatMap(component => component.photos);
     
-    // Generate PDF based on user role
+    // Generate PDF based on user role (viewers must not receive company logo)
+    const role = String(userRole || '').toLowerCase().trim();
     let pdfBuffer: Buffer;
-    if (userRole === 'viewer') {
+    if (role === 'viewer') {
       pdfBuffer = await PDFService.generatePDFWithoutLogo(
         report,
         components,
@@ -907,6 +908,7 @@ export const downloadPDF = async (req: Request, res: Response): Promise<void> =>
 export const sendReportEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user.id;
+    const userRole = String((req as any).user?.role || '').toLowerCase().trim();
     const reportId = req.params.id;
     const { emails, subject, message } = req.body;
     
@@ -964,13 +966,20 @@ export const sendReportEmail = async (req: Request, res: Response): Promise<void
     // Flatten photos array
     const allPhotos = components.flatMap(component => component.photos);
     
-    // Generate PDF
-    const pdfBuffer = await PDFService.generatePDF(
-      report,
-      components,
-      allPhotos,
-      suggestedPartsResult.rows
-    );
+    // Viewers must not receive company logo in emailed PDFs either
+    const pdfBuffer = userRole === 'viewer'
+      ? await PDFService.generatePDFWithoutLogo(
+          report,
+          components,
+          allPhotos,
+          suggestedPartsResult.rows
+        )
+      : await PDFService.generatePDF(
+          report,
+          components,
+          allPhotos,
+          suggestedPartsResult.rows
+        );
     
     // Send emails
     const emailResults = await EmailService.sendMultipleEmails(
